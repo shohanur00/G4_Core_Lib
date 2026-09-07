@@ -31,6 +31,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/files.cmake)
 # Add sources to executable/library
 target_sources(${PROJECT_NAME} PRIVATE
   # User defined sources
+  App/app.c
+  BSP/board.c
 )
 
 # Add include directories

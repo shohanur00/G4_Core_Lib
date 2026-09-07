@@ -17,24 +17,18 @@
  */
 
 #include "stm32g431xx.h"
-#include <stdint.h>
-#include <stdio.h>
+#include "app.h"
 
-
-#define LED_Pin        0U
-#define LED_GPIO_Port  GPIOA
 
 int main(void)
 {
-    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
-    LED_GPIO_Port->MODER &= ~(3U << 0);
-    LED_GPIO_Port->MODER |=  (1U << 0);
+    App_Setup();
 
     /* Loop forever */
-    
+
 	while (1)
     {
-        LED_GPIO_Port->ODR ^= (1U << 0);
-        for (volatile uint32_t i = 0; i < 500000; i++);
+        App_Loop();
+
     }
 }
