@@ -33,6 +33,9 @@ target_sources(${PROJECT_NAME} PRIVATE
   # User defined sources
   App/app.c
   BSP/board.c
+  Drivers/gpio/gpio.c
+  Drivers/timecore/timecore.c
+  Drivers/timecore/timecore_hal.c
 )
 
 # Add include directories
