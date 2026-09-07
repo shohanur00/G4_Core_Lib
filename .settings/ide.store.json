@@ -1,0 +1,9 @@
+{
+  "device": "STM32G431CBT6",
+  "core": "Cortex-M4",
+  "order": 0,
+  "toolchain": "GCC",
+  "source": {
+    "sourceType": "Empty"
+  }
+}

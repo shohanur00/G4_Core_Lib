@@ -1,0 +1,19 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Flash Program",
+            "type": "shell",
+            "command": "STM32_Programmer_CLI",
+            "args": [
+                "-c",
+                "port=SWD",
+                "-w",
+                "${workspaceFolder}/build/${command:cmake.buildType}/${workspaceFolderBasename}.elf",
+                "-rst"
+            ],
+        }
+    ],
+    
+}
+

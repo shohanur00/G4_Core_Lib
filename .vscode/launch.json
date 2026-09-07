@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug STM32G431",
+            "type": "cortex-debug",
+            "request": "launch",
+
+            "servertype": "stlink",
+            "device": "STM32G431CB",
+            "interface": "swd",
+
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/${command:cmake.buildType}/${workspaceFolderBasename}.elf",
+
+            "runToEntryPoint": "main",
+
+            "svdFile": "${workspaceFolder}/STM32G431.svd"
+        }
+    ]
+}
