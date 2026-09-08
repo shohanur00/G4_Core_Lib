@@ -37,6 +37,8 @@ target_sources(${PROJECT_NAME} PRIVATE
   Drivers/timecore/timecore.c
   Drivers/timecore/timecore_hal.c
   Services/Debug/debug.c
+  Drivers/gpio/gpio_hal.c
+  Drivers/systemclock/systemclock.c
 )
 
 # Add include directories
