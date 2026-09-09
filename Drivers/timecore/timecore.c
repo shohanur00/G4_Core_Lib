@@ -208,7 +208,7 @@ uint8_t TimeCore_IsAllocated(uint8_t timer_id)
 
 void TimeCore_SafeDeleteTimer(uint8_t timer_id)
 {
-    if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && timers[timer_id - 1U].state == TIMECORE_TIMER_EXPIRED && (timers[timer_id - 1U].state != TIMERCORE_TIMER_INVALID))
+    if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && timers[timer_id - 1U].state == TIMECORE_TIMER_EXPIRED && (timers[timer_id - 1U].state != TIMECORE_TIMER_INVALID))
     {
         timers[timer_id - 1U].state = TIMECORE_TIMER_INVALID; // Mark the timer as invalid
         timers[timer_id - 1U].remaining_ms = 0U; // Reset remaining time
@@ -230,7 +230,7 @@ void TimeCore_ForceDeleteTimer(uint8_t timer_id)
 
 void TimeCore_SetDurationSecurely(uint8_t timer_id, uint32_t duration_ms)
 {
-    if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && (timers[timer_id - 1U].state == TIMECORE_TIMER_EXPIRED) && (timers[timer_id - 1U].state != TIMERCORE_TIMER_INVALID))
+    if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && (timers[timer_id - 1U].state == TIMECORE_TIMER_EXPIRED) && (timers[timer_id - 1U].state != TIMECORE_TIMER_INVALID))
     {
         // Pause the timer if it's running
         TimeCore_PauseTimer(timer_id);
