@@ -5,7 +5,7 @@
 #define TIMECORE_TICK_FREQ_HZ    1000UL
 
 static volatile uint32_t timecore_ms = 0U;
-volatile uint8_t timecore_update_flag = 0U;
+static volatile uint8_t timecore_update_flag = 0U;
 
 
 void TimeCore_HAL_Init(void)
