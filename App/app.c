@@ -18,6 +18,6 @@ void App_Setup(void)
 void App_Loop(void)
 {   
     GPIO_Toggle(GPIO_LED);
-    for (volatile uint32_t i = 0; i < 100000; i++); // Simple delay loop
+    for (volatile uint32_t i = 0; i < 1000000; i++); // Simple delay loop
     // Implementation for application loop
 }
