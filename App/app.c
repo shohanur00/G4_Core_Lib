@@ -5,19 +5,29 @@
 #include "systemclock/systemclock.h"
 #include "gpio/gpio.h"
 #include "board.h"
+#include "timecore/timecore.h"
 
+uint8_t LED_timer; // Define the GPIO pin for the LED
 
 void App_Setup(void)
 {
     SystemClock_Init();
     GPIO_Init();
+    TimeCore_Init();
+    LED_timer = TimeCore_CreateTimer(5000); // Create a timer for 500 ms
+
     // Implementation for application setup
 }
 
 
 void App_Loop(void)
 {   
-    GPIO_Toggle(GPIO_LED);
-    for (volatile uint32_t i = 0; i < 1000000; i++); // Simple delay loop
+    if(TimeCore_IsExpired(LED_timer))
+    {
+        TimeCore_ResetTimer(LED_timer); // Reset the timer for the next cycle
+        Timecore_StartTimer(LED_timer); // Start the timer for the next cycle
+        GPIO_Toggle(GPIO_LED); // Toggle the LED state
+    }
+    TimeCore_MainLoop(); // Call the main loop function for time-based tasks
     // Implementation for application loop
 }
