@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 
-#define TIMECORE_MAX_TIMERS    5U
+#define TIMECORE_MAX_TIMERS    25U
 
 typedef enum
 {
@@ -135,7 +135,7 @@ void TimeCore_ResetAllTimers(void)
     for (uint8_t i = 0; i < TIMECORE_MAX_TIMERS; i++)
     {
         timers[i].state = TIMECORE_TIMER_CREATED; // Reset all timer states
-        timers[i].remaining_ms = 0U; // Reset all timers to 0
+        timers[i].remaining_ms = timers[i].period_ms; // Reset all timers to their period
     }
 }
 
@@ -264,6 +264,18 @@ void TimeCore_ForceDeleteTimer(uint8_t timer_id)
         timers[timer_id - 1U].state = TIMECORE_TIMER_INVALID; // Mark the timer as invalid
         timers[timer_id - 1U].remaining_ms = 0U; // Reset remaining time
         timers[timer_id - 1U].period_ms = 0U; // Reset period time
+    }
+}
+
+
+
+void TimeCore_DeleteAllTimers(void)
+{
+    for (uint8_t i = 0; i < TIMECORE_MAX_TIMERS; i++)
+    {
+        timers[i].state = TIMECORE_TIMER_INVALID; // Mark all timers as invalid
+        timers[i].remaining_ms = 0U; // Reset remaining time
+        timers[i].period_ms = 0U; // Reset period time
     }
 }
 
