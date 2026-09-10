@@ -52,6 +52,14 @@ void TimeCore_Init(void)
     TimeCore_HAL_Init();
 }
 
+void TimeCore_Deinit(void)
+{
+    // Reset all timers to their initial state
+    TimeCore_Struct_Init();
+    TimeCore_HAL_Deinit();
+    // Additional deinitialization steps can be added here if needed
+}
+
 uint32_t TimeCore_GetMs(void)
 {
     return TimeCore_HAL_GetMs();
@@ -257,7 +265,6 @@ void TimeCore_SetDurationForcefully(uint8_t timer_id, uint32_t duration_ms)
         timers[timer_id - 1U].remaining_ms = duration_ms;
     }
 }
-
 
 
 void TimeCore_MainLoop(void)

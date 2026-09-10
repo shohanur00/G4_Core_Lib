@@ -144,6 +144,12 @@ void TimeCore_SetDurationSecurely(uint8_t timer_id, uint32_t duration_ms);
  */
 void TimeCore_SetDurationForcefully(uint8_t timer_id, uint32_t duration_ms);
 
+
+/**
+ * @brief Deinitialize TimeCore module
+ */
+void TimeCore_Deinit(void);
+
 /**
  * @brief Main loop handler for timer updates
  */

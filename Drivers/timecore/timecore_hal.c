@@ -44,6 +44,12 @@ static void TimeCore_HAL_EnableClock(void)
 }
 
 
+static void TimeCore_HAL_DisableClock(void)
+{
+    TIMECORE_HAL_TIMER_DISABLE();
+}
+
+
 static uint32_t TimeCore_HAL_GetTimerClock(void)
 {
     return SystemClock_GetFrequency();
@@ -116,6 +122,21 @@ static void TimeCore_HAL_ConfigureInterrupt(void)
 }
 
 
+static void TimeCore_HAL_DisableInterrupt(void)
+{
+    /*
+     * Disable NVIC interrupt.
+     */
+
+    NVIC_DisableIRQ(TIMECORE_HAL_TIMER_IRQn);
+
+    /*
+     * Disable update interrupt.
+     */
+
+    TIMECORE_HAL_TIMER_INSTANCE->DIER &= ~TIM_DIER_UIE;
+}
+
 /* ============================================================
  * Public Interface
  * ============================================================ */
@@ -158,6 +179,17 @@ void TimeCore_HAL_Init(void)
     TIMECORE_HAL_TIMER_INSTANCE->CR1 |= TIM_CR1_CEN;
 }
 
+
+void TimeCore_HAL_Deinit(void)
+{
+    /*
+     * Stop timer.
+     */
+
+    TIMECORE_HAL_TIMER_INSTANCE->CR1 = 0U;
+    TimeCore_HAL_DisableInterrupt();
+    TimeCore_HAL_DisableClock();
+}
 
 uint32_t TimeCore_HAL_GetMs(void)
 {

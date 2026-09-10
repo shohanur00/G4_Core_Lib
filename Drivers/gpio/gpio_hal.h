@@ -11,7 +11,7 @@
  * @note GPIO_HAL_Init() applies initial_state to the output register BEFORE switching 
  *       MODER to output mode, preventing electrical glitches on sensitive pins such as 
  *       motor gate-driver pins during mode transitions.
- * 
+ * @github [https://github.com/shohanur00/G4_Core_Lib/tree/main/Drivers/gpio]
  * @author [Md. Shohanur Rahman]
  * @version 1.0.0
  * @date [09/09/2026]
