@@ -215,6 +215,24 @@ void TimeCore_HAL_IRQHandler(void)
 
 
 /* ============================================================
+ * Common Interrupt Handler Test Function
+ * ============================================================ */
+
+void TimeCore_HAL_Test(void)
+{
+    TimeCore_HAL_Init();
+
+    while (1)
+    {
+        if (TimeCore_HAL_GetUpdateFlag())
+        {
+            TimeCore_HAL_ClearUpdateFlag();
+            // Perform time-based tasks here
+        }
+    }
+}
+
+/* ============================================================
  * Timer Interrupt Vector
  * ============================================================ */
 

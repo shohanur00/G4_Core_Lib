@@ -149,4 +149,10 @@ void TimeCore_SetDurationForcefully(uint8_t timer_id, uint32_t duration_ms);
  */
 void TimeCore_MainLoop(void);
 
+/**
+ * @brief Test function for timer functionality
+ */
+
+void TimeCore_Test(void);
+
 #endif // TIMECORE_H

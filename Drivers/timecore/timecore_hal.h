@@ -154,18 +154,42 @@
 /* ============================================================
  * HAL Interface
  * ============================================================ */
-
+ 
+/**
+ * @brief Initialize the TimeCore hardware abstraction layer
+ */
 void TimeCore_HAL_Init(void);
 
+/**
+ * @brief Retrieve the elapsed system time in milliseconds
+ * @return Elapsed time in milliseconds
+ */
 uint32_t TimeCore_HAL_GetMs(void);
 
+/**
+ * @brief Reset the system time counter
+ */
 void TimeCore_HAL_ResetMs(void);
 
+/**
+ * @brief Clear the timer update event flag
+ */
 void TimeCore_HAL_ClearUpdateFlag(void);
 
+/**
+ * @brief Retrieve the timer update event flag status
+ * @return Update flag status
+ */
 uint8_t TimeCore_HAL_GetUpdateFlag(void);
 
+/**
+ * @brief Handle the timer update interrupt
+ */
 void TimeCore_HAL_IRQHandler(void);
 
+/**
+ * @brief Execute the TimeCore HAL diagnostic test
+ */
+void TimeCore_HAL_Test(void);
 
 #endif /* TIMECORE_HAL_H */

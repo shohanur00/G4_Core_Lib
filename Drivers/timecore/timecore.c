@@ -283,3 +283,10 @@ void TimeCore_MainLoop(void)
     // This function can be used to handle any time-based tasks if needed.
     // Currently, it does not perform any operations.
 }
+
+
+void TimeCore_Test(void)
+{
+    // This function can be used for testing purposes.
+    // Currently, it does not perform any operations.
+}
