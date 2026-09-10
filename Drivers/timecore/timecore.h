@@ -38,7 +38,7 @@ uint8_t TimeCore_CreateTimer(uint32_t duration_ms);
  * @brief Start a created timer
  * @param timer_id Timer ID returned from TimeCore_CreateTimer
  */
-void Timecore_StartTimer(uint8_t timer_id);
+void TimeCore_StartTimer(uint8_t timer_id);
 
 /**
  * @brief Stop a running timer
@@ -82,6 +82,14 @@ uint8_t TimeCore_IsExpired(uint8_t timer_id);
  * @return 1 if expired, 0 otherwise
  */
 uint8_t TimeCore_ContinousExpiredEvent(uint8_t timer_id);
+
+
+/**
+ * @brief Check for one-shot expiration events
+ * @param timer_id Timer ID
+ * @return 1 if expired, 0 otherwise
+ */
+uint8_t TimeCore_OneShotExpiredEvent(uint8_t timer_id);
 
 /**
  * @brief Get remaining time for a timer

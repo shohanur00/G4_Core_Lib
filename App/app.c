@@ -14,18 +14,19 @@ void App_Setup(void)
     SystemClock_Init();
     GPIO_Init();
     TimeCore_Init();
-    LED_timer = TimeCore_CreateTimer(500); // Create a timer for 500 ms
-    Timecore_StartTimer(LED_timer);
+    LED_timer = TimeCore_CreateTimer(200); // Create a timer for 200 ms
+    TimeCore_SetDurationSecurely(LED_timer, 5000); // Set the timer duration to 5000 ms
+    TimeCore_StartTimer(LED_timer);
     // Implementation for application setup
 }
 
 
 void App_Loop(void)
 {   
-    if(TimeCore_IsExpired(LED_timer))
+    if(TimeCore_OneShotExpiredEvent(LED_timer))
     {
-        TimeCore_ResetTimer(LED_timer); // Reset the timer for the next cycle
-        Timecore_StartTimer(LED_timer); // Start the timer for the next cycle
+        //TimeCore_ResetTimer(LED_timer); // Reset the timer for the next cycle
+        // TimeCore_StartTimer(LED_timer); // Start the timer for the next cycle
         GPIO_Toggle(GPIO_LED); // Toggle the LED state
     }
     TimeCore_MainLoop(); // Call the main loop function for time-based tasks

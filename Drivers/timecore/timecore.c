@@ -110,7 +110,7 @@ void TimeCore_ResumeTimer(uint8_t timer_id)
 }
 
 
-void Timecore_StartTimer(uint8_t timer_id)
+void TimeCore_StartTimer(uint8_t timer_id)
 {
     if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && timers[timer_id - 1U].state == TIMECORE_TIMER_CREATED)
     {
@@ -155,9 +155,14 @@ uint8_t TimeCore_IsExpired(uint8_t timer_id)
 
 
 uint8_t TimeCore_ContinousExpiredEvent(uint8_t timer_id)
-{
+{ 
     if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && timers[timer_id - 1U].state != TIMECORE_TIMER_INVALID)
     {
+        if(timers[timer_id-1U].state == TIMECORE_TIMER_CREATED)
+        {
+            timers[timer_id - 1U].state = TIMECORE_TIMER_RUNNING; // Start the timer if it's in the created state
+        }
+
         if (timers[timer_id - 1U].remaining_ms == 0U)
         {
             timers[timer_id - 1U].remaining_ms = timers[timer_id - 1U].period_ms; // Reset remaining time for continuous event
@@ -168,6 +173,33 @@ uint8_t TimeCore_ContinousExpiredEvent(uint8_t timer_id)
     return 0U; // Invalid timer ID returns 0
 }
 
+
+uint8_t TimeCore_OneShotExpiredEvent(uint8_t timer_id)
+{
+    if (timer_id > 0U &&
+        timer_id <= TIMECORE_MAX_TIMERS &&
+        timers[timer_id - 1U].state != TIMECORE_TIMER_INVALID)
+    {
+        uint8_t index = timer_id - 1U;
+
+        /* Auto-start on first use */
+        if (timers[index].state == TIMECORE_TIMER_CREATED)
+        {
+            timers[index].state = TIMECORE_TIMER_RUNNING;
+        }
+
+        /* One-shot expiration */
+        if (timers[index].state == TIMECORE_TIMER_RUNNING &&
+            timers[index].remaining_ms == 0U)
+        {
+            timers[index].state = TIMECORE_TIMER_EXPIRED;
+
+            return 1U;
+        }
+    }
+
+    return 0U;
+}
 
 uint32_t TimeCore_GetRemainingTime(uint8_t timer_id)
 {
@@ -238,7 +270,7 @@ void TimeCore_ForceDeleteTimer(uint8_t timer_id)
 
 void TimeCore_SetDurationSecurely(uint8_t timer_id, uint32_t duration_ms)
 {
-    if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && (timers[timer_id - 1U].state == TIMECORE_TIMER_EXPIRED) && (timers[timer_id - 1U].state != TIMECORE_TIMER_INVALID))
+    if (timer_id > 0U && timer_id <= TIMECORE_MAX_TIMERS && ((timers[timer_id - 1U].state == TIMECORE_TIMER_EXPIRED) || (timers[timer_id - 1U].state == TIMECORE_TIMER_CREATED)) && (timers[timer_id - 1U].state != TIMECORE_TIMER_INVALID))
     {
         // Pause the timer if it's running
         TimeCore_PauseTimer(timer_id);
