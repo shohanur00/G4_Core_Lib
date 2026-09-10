@@ -1,3 +1,25 @@
+/**
+ * @file gpio_hal.h
+ * @brief GPIO Hardware Abstraction Layer (HAL) - Low-level GPIO control interface
+ * @details Provides a portable GPIO configuration and control interface for the STM32G4 
+ *          microcontroller series. Abstracts hardware-specific register manipulation and 
+ *          clock management. Supports multiple GPIO modes (input, output, alternate function, 
+ *          analog), output types (push-pull, open-drain), pull configurations, output speeds,
+ *          and alternate function selection. Includes automatic port clock enablement and
+ *          glitch-free initialization with configurable initial pin states.
+ * 
+ * @note GPIO_HAL_Init() applies initial_state to the output register BEFORE switching 
+ *       MODER to output mode, preventing electrical glitches on sensitive pins such as 
+ *       motor gate-driver pins during mode transitions.
+ * 
+ * @author [Md. Shohanur Rahman]
+ * @version 1.0.0
+ * @date [09/09/2026]
+ * @copyright [Copyright All rights reserved]
+ * 
+ * @target STM32G431xx microcontroller
+ * @dependencies stm32g431xx.h, stdint.h, stddef.h
+ */
 #ifndef GPIO_HAL_H
 #define GPIO_HAL_H
 

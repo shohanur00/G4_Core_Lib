@@ -1,5 +1,16 @@
-// filepath: e:\Software Project\G4_Core_Lib\Drivers\timecore\timecore.h
-#include <stdint.h>
+/**
+ * @file timecore.h
+ * @brief TimeCore - A lightweight embedded timer management library
+ * @details Provides timer creation, management, and scheduling capabilities
+ *          for embedded systems. Supports multiple concurrent timers with
+ *          pause/resume, expiration checking, and time tracking features.
+ * @author [Md. Shohanur Rahman]
+ * @github [https://github.com/shohanur00/G4_Core_Lib/tree/main/Drivers/timecore]
+ * @version 1.0.0
+ * @date [09/09/2026]
+ * @copyright [Copyright All rights reserved]
+ */
+
 #ifndef TIMECORE_H
 #define TIMECORE_H
 

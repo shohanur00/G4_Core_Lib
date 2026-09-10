@@ -1,3 +1,38 @@
+/**
+ * @file gpio.h
+ * @brief GPIO - General Purpose Input/Output Driver
+ * @details Provides a hardware-abstraction layer for GPIO pin management
+ *          across different MCU families. Supports pin configuration,
+ *          state control, and runtime reconfiguration through ioctl commands.
+ *          All physical port/pin mappings are isolated in the BSP layer
+ *          (board_gpio.h/.c), keeping application code MCU-independent.
+ * 
+ * @section Features
+ *   - Logical pin naming (application uses symbolic names only)
+ *   - Flexible pin configuration (mode, pull, speed, output type, alternate function)
+ *   - Runtime pin reconfiguration via ioctl interface
+ *   - Fast hot-path operations (read, write, toggle) via dedicated functions
+ *   - Support for input, output, alternate, and analog modes
+ *   - Configurable pull resistors and output drive characteristics
+ *   - Pin locking capability for write-protection
+ * 
+ * @section Pin Configuration
+ *   Pin behavior is defined through GPIO_Config_t structure containing:
+ *   - Mode: input, output, alternate function, or analog
+ *   - Pull configuration: none, up, or down
+ *   - Output speed: very low to very high
+ *   - Output type: push-pull or open-drain
+ *   - Alternate function: raw index (0-15) for MCU-specific muxing
+ *   - Initial state: LOW or HIGH
+ * 
+ * @author [Md. Shohanur Rahman]
+ * @version 1.0.0
+ * @date [09/09/2026]
+ * @copyright [Copyright All rights reserved]
+ */
+
+
+ 
 #ifndef GPIO_H
 #define GPIO_H
 
@@ -9,7 +44,7 @@
  * ============================================================
  * Application code refers to pins only by these names. No
  * physical port/pin or STM32 detail is ever exposed here —
- * that mapping lives in BSP (board_gpio.h/.c).
+ * that mapping lives in BSP (board.h/.c).
  * ============================================================ */
 
 #pragma HARDWARE start

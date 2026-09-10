@@ -259,6 +259,7 @@ void TimeCore_SetDurationForcefully(uint8_t timer_id, uint32_t duration_ms)
 }
 
 
+
 void TimeCore_MainLoop(void)
 {   
     if (TimeCore_HAL_GetUpdateFlag())

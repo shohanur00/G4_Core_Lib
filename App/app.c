@@ -14,7 +14,7 @@ void App_Setup(void)
     SystemClock_Init();
     GPIO_Init();
     TimeCore_Init();
-    LED_timer = TimeCore_CreateTimer(1000); // Create a timer for 1000 ms
+    LED_timer = TimeCore_CreateTimer(500); // Create a timer for 500 ms
     Timecore_StartTimer(LED_timer);
     // Implementation for application setup
 }
