@@ -5,6 +5,7 @@
  * @version 1.0.0
  * @date [09/09/2026]
  * @github [https://github.com/shohanur00/G4_Core_Lib/tree/main/Drivers/timecore]
+ * @linkedIn [https://www.linkedin.com/in/engr-shohanur-rahman-181a69250/]
  * @details
  * Provides hardware abstraction layer functions for time core management,
  * including initialization, millisecond tracking, and update flag handling.

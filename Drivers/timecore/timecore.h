@@ -10,6 +10,7 @@
  *
  * @author  [Md. Shohanur Rahman]
  * @github  [https://github.com/shohanur00/G4_Core_Lib/tree/main/Drivers/timecore]
+ * @linkedIn [https://www.linkedin.com/in/engr-shohanur-rahman-181a69250/]
  * @version [1.0.0]
  * @date    [09/09/2026]
  * @copyright [Copyright All rights reserved]

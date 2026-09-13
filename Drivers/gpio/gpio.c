@@ -47,7 +47,7 @@ static const GPIO_InitEntry_t gpio_init_table[] =
 
 static const GPIO_HAL_Pin_t gpio_map[GPIO_COUNT] =
 {
-    [GPIO_LED] = { .port = LED_PORT, .pin = LED_PIN },
+    [GPIO_LED] = { .port = LED_PORT, .pin = LED_PIN },      //LED_PORT and LED_PIN are defined in board.h
 };
 
 #pragma HARDWARE END

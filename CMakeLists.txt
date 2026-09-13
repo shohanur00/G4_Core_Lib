@@ -39,6 +39,8 @@ target_sources(${PROJECT_NAME} PRIVATE
   Services/Debug/debug.c
   Drivers/gpio/gpio_hal.c
   Drivers/systemclock/systemclock.c
+  Drivers/logger/logger.c
+  Drivers/logger/logger_hal.c
 )
 
 # Add include directories
