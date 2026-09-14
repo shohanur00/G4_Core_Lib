@@ -60,9 +60,9 @@ void TimeCore_Deinit(void)
     // Additional deinitialization steps can be added here if needed
 }
 
-uint32_t TimeCore_GetMs(void)
+uint32_t TimeCore_GetTick(void)
 {
-    return TimeCore_HAL_GetMs();
+    return TimeCore_HAL_GetTick();
 }
 
 uint8_t TimeCore_CreateTimer(uint32_t duration_ms)

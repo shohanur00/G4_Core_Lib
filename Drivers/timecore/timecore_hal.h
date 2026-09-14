@@ -195,12 +195,12 @@ void TimeCore_HAL_Deinit(void);
  * @brief Retrieve the elapsed system time in milliseconds
  * @return Elapsed time in milliseconds
  */
-uint32_t TimeCore_HAL_GetMs(void);
+uint32_t TimeCore_HAL_GetTick(void);
 
 /**
  * @brief Reset the system time counter
  */
-void TimeCore_HAL_ResetMs(void);
+void TimeCore_HAL_ResetTick(void);
 
 /**
  * @brief Clear the timer update event flag

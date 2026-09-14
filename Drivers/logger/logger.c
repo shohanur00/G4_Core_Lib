@@ -1,9 +1,11 @@
 #include "logger.h"
 #include <stddef.h>
+#include "logger_hal.h"
 
 
 #define LOG_BUFFER_SIZE    128U
 static LOG_Level_t module_levels[LOG_MODULE_MAX];
+static uint32_t log_timestamp = 0U; 
 
 
 /* Human-readable names, indexed by enum value (extend as modules are added) */
@@ -18,8 +20,21 @@ static const char *const level_strings[LOG_LEVEL_CRITICAL + 1U] =
     [LOG_LEVEL_INFO]     = "INFO",
     [LOG_LEVEL_WARNING]  = "WARN",
     [LOG_LEVEL_ERROR]    = "ERROR",
-    [LOG_LEVEL_CRITICAL] = "CRIT"
+    [LOG_LEVEL_CRITICAL] = "CRITICAL"
 };
+
+#if LOG_USE_COLOR
+static const char *const level_colors[LOG_LEVEL_CRITICAL + 1U] =
+{
+    [LOG_LEVEL_DEBUG]    = "\x1b[36m",  /* cyan    */
+    [LOG_LEVEL_INFO]     = "\x1b[32m",  /* green   */
+    [LOG_LEVEL_WARNING]  = "\x1b[33m",  /* yellow  */
+    [LOG_LEVEL_ERROR]    = "\x1b[31m",  /* red     */
+    [LOG_LEVEL_CRITICAL] = "\x1b[35m"   /* magenta */
+};
+
+#define LOG_COLOR_RESET  "\x1b[0m"
+#endif
 
 
 static void LOG_AppendChar(
@@ -89,6 +104,44 @@ static void LOG_AppendUnsigned(
         );
     }
 }
+
+
+#if LOG_USE_TIMESTAMP
+static void LOG_AppendUnsignedPadded(
+    char *buffer,
+    size_t *position,
+    size_t size,
+    unsigned int value,
+    int width
+)
+{
+    char temp[10];
+    int index = 0;
+
+    if (value == 0U)
+    {
+        temp[index++] = '0';
+    }
+    else
+    {
+        while (value > 0U)
+        {
+            temp[index++] = (char)('0' + (value % 10U));
+            value /= 10U;
+        }
+    }
+
+    for (int pad = index; pad < width; pad++)
+    {
+        LOG_AppendChar(buffer, position, size, '0');
+    }
+
+    while (index > 0)
+    {
+        LOG_AppendChar(buffer, position, size, temp[--index]);
+    }
+}
+#endif
 
 
 static void LOG_AppendInteger(
@@ -249,14 +302,37 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
 
     buffer[0] = '\0';
 
-    /* Prefix: [LEVEL][MODULE] */
+#if LOG_USE_COLOR
+    LOG_AppendString(buffer, &position, sizeof(buffer), level_colors[level]);
+#endif
+
+#if LOG_USE_TIMESTAMP
+    LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
+    LOG_AppendUnsignedPadded(
+        buffer,
+        &position,
+        sizeof(buffer),
+        log_timestamp,
+        8
+    );
+    LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
+#endif
+
+#if LOG_USE_LEVEL_TAG
     LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
     LOG_AppendString(buffer, &position, sizeof(buffer), level_strings[level]);
     LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
+#endif
+
+#if LOG_USE_MODULE_NAME
     LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
     LOG_AppendString(buffer, &position, sizeof(buffer), module_names[module]);
     LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
+#endif
+
+#if (LOG_USE_TIMESTAMP || LOG_USE_LEVEL_TAG || LOG_USE_MODULE_NAME)
     LOG_AppendChar(buffer, &position, sizeof(buffer), ' ');
+#endif
 
     va_start(args, format);
 
@@ -442,6 +518,22 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
 
     va_end(args);
 
+#if LOG_USE_COLOR
+    LOG_AppendString(buffer, &position, sizeof(buffer), LOG_COLOR_RESET);
+#endif
+
+#if LOG_USE_NEWLINE
+    LOG_AppendString(buffer, &position, sizeof(buffer), "\r\n");
+#endif
+
     /* Hand the finished line off to the HAL for actual transmission */
-    // LOG_HAL_Write(buffer, position);
+    LOG_HAL_Write(buffer, position);
+}
+
+
+void LOG_MainLoop(uint32_t ref_time)
+{
+    #if LOG_USE_TIMESTAMP
+        log_timestamp = ref_time;
+    #endif
 }

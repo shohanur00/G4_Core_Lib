@@ -46,7 +46,7 @@ void TimeCore_Deinit(void);
  *
  * @return Current system time in milliseconds.
  */
-uint32_t TimeCore_GetMs(void);
+uint32_t TimeCore_GetTick(void);
 
 
 /* ============================================================================

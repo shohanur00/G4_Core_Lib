@@ -30,7 +30,7 @@
  * Private Module State
  * ============================================================ */
 
-static volatile uint32_t timecore_subsecond = 0U;
+static volatile uint32_t timecore_tick = 0U;
 static volatile uint8_t  timecore_updateFlag = 0U;
 
 
@@ -191,15 +191,15 @@ void TimeCore_HAL_Deinit(void)
     TimeCore_HAL_DisableClock();
 }
 
-uint32_t TimeCore_HAL_GetMs(void)
+uint32_t TimeCore_HAL_GetTick(void)
 {
-    return timecore_subsecond;
+    return timecore_tick;
 }
 
 
-void TimeCore_HAL_ResetMs(void)
+void TimeCore_HAL_ResetTick(void)
 {
-    timecore_subsecond = 0U;
+    timecore_tick = 0U;
 }
 
 
@@ -234,7 +234,7 @@ void TimeCore_HAL_IRQHandler(void)
          * Increment millisecond counter.
          */
 
-        timecore_subsecond++;
+        timecore_tick++;
 
 
         /*
