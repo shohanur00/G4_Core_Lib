@@ -1,8 +1,25 @@
 #include "logger.h"
-
+#include <stddef.h>
 
 
 #define LOG_BUFFER_SIZE    128U
+static LOG_Level_t module_levels[LOG_MODULE_MAX];
+
+
+/* Human-readable names, indexed by enum value (extend as modules are added) */
+static const char *const module_names[LOG_MODULE_MAX] =
+{
+    [LOG_MODULE_SYSTEM] = "SYSTEM"
+};
+
+static const char *const level_strings[LOG_LEVEL_CRITICAL + 1U] =
+{
+    [LOG_LEVEL_DEBUG]    = "DEBUG",
+    [LOG_LEVEL_INFO]     = "INFO",
+    [LOG_LEVEL_WARNING]  = "WARN",
+    [LOG_LEVEL_ERROR]    = "ERROR",
+    [LOG_LEVEL_CRITICAL] = "CRIT"
+};
 
 
 static void LOG_AppendChar(
@@ -190,22 +207,56 @@ static void LOG_AppendBinary(
 
 void LOG_Init(void){
     // Initialize the logger hardware abstraction layer (HAL)
+    for (LOG_Module_t module = LOG_MODULE_SYSTEM;
+         module < LOG_MODULE_MAX;
+         module++)
+    {
+        module_levels[module] = LOG_LEVEL_INFO;
+    }
     LOG_HAL_Init();
 }
 
 void LOG_SetModuleLevel(LOG_Module_t module, LOG_Level_t level){
     // Set the logging level for the specified module
-    LOG_HAL_SetModuleLevel(module, level);
+    if (module >= LOG_MODULE_MAX)
+    {
+        return;
+    }
+
+    if (level > LOG_LEVEL_CRITICAL)
+    {
+        return;
+    }
+
+    module_levels[module] = level; 
 }
 
 void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
-    // Implementation for writing log messages
+    /*
+     * Runtime filtering: bail out before touching the buffer if the
+     * module index is invalid or this message is below the module's
+     * configured threshold.
+     */
+    if ((module >= LOG_MODULE_MAX) || (level < module_levels[module]))
+    {
+        return;
+    }
+
     char buffer[LOG_BUFFER_SIZE];
     size_t position = 0U;
 
     va_list args;
 
     buffer[0] = '\0';
+
+    /* Prefix: [LEVEL][MODULE] */
+    LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
+    LOG_AppendString(buffer, &position, sizeof(buffer), level_strings[level]);
+    LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
+    LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
+    LOG_AppendString(buffer, &position, sizeof(buffer), module_names[module]);
+    LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
+    LOG_AppendChar(buffer, &position, sizeof(buffer), ' ');
 
     va_start(args, format);
 
@@ -391,6 +442,6 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
 
     va_end(args);
 
-
-
+    /* Hand the finished line off to the HAL for actual transmission */
+    // LOG_HAL_Write(buffer, position);
 }

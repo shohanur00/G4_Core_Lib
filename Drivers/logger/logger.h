@@ -44,6 +44,14 @@ typedef enum
 } LOG_Level_t;
 
 
+typedef struct
+{
+    LOG_Module_t module;
+    LOG_Level_t level;
+    const char *message;
+
+} LOG_Message_t;
+
 /* Logger API */
 void LOG_Init(void);
 
