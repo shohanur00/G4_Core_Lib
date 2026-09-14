@@ -40,7 +40,7 @@ target_sources(${PROJECT_NAME} PRIVATE
   Drivers/gpio/gpio_hal.c
   Drivers/systemclock/systemclock.c
   Drivers/logger/logger.c
-  Drivers/logger/logger_hal.c
+  Drivers/logger/HAL/logger_hal.c
 )
 
 # Add include directories

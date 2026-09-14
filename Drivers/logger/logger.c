@@ -1,6 +1,6 @@
 #include "logger.h"
 #include <stddef.h>
-#include "logger_hal.h"
+#include "HAL/logger_hal.h"
 
 
 #define LOG_BUFFER_SIZE    128U
