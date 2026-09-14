@@ -16,21 +16,21 @@ static const char *const module_names[LOG_MODULE_MAX] =
 
 static const char *const level_strings[LOG_LEVEL_CRITICAL + 1U] =
 {
-    [LOG_LEVEL_DEBUG]    = "DEBUG",
-    [LOG_LEVEL_INFO]     = "INFO",
-    [LOG_LEVEL_WARNING]  = "WARN",
-    [LOG_LEVEL_ERROR]    = "ERROR",
-    [LOG_LEVEL_CRITICAL] = "CRITICAL"
+    [LOG_LEVEL_DEBUG]    = "DBG",
+    [LOG_LEVEL_INFO]     = "INF",
+    [LOG_LEVEL_WARNING]  = "WRN",
+    [LOG_LEVEL_ERROR]    = "ERR",
+    [LOG_LEVEL_CRITICAL] = "CRI"
 };
 
 #if LOG_USE_COLOR
 static const char *const level_colors[LOG_LEVEL_CRITICAL + 1U] =
 {
-    [LOG_LEVEL_DEBUG]    = "\x1b[36m",  /* cyan    */
-    [LOG_LEVEL_INFO]     = "\x1b[32m",  /* green   */
-    [LOG_LEVEL_WARNING]  = "\x1b[33m",  /* yellow  */
-    [LOG_LEVEL_ERROR]    = "\x1b[31m",  /* red     */
-    [LOG_LEVEL_CRITICAL] = "\x1b[35m"   /* magenta */
+    [LOG_LEVEL_DEBUG]    = "\x1b[92m",     /* Bright Green */
+    [LOG_LEVEL_INFO]     = "\x1b[36m",     /* Cyan       */
+    [LOG_LEVEL_WARNING]  = "\x1b[33m",     /* Yellow     */
+    [LOG_LEVEL_ERROR]    = "\x1b[31m",     /* Red        */
+    [LOG_LEVEL_CRITICAL] = "\x1b[1;91m"    /* Bold Bright Red */
 };
 
 #define LOG_COLOR_RESET  "\x1b[0m"
@@ -302,9 +302,7 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
 
     buffer[0] = '\0';
 
-#if LOG_USE_COLOR
-    LOG_AppendString(buffer, &position, sizeof(buffer), level_colors[level]);
-#endif
+
 
 #if LOG_USE_TIMESTAMP
     LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
@@ -318,16 +316,26 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
     LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
 #endif
 
+#if LOG_USE_COLOR
+    LOG_AppendString(buffer, &position, sizeof(buffer), level_colors[level]);
+#endif
+
 #if LOG_USE_LEVEL_TAG
     LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
     LOG_AppendString(buffer, &position, sizeof(buffer), level_strings[level]);
     LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
 #endif
 
+
 #if LOG_USE_MODULE_NAME
     LOG_AppendChar(buffer, &position, sizeof(buffer), '[');
     LOG_AppendString(buffer, &position, sizeof(buffer), module_names[module]);
     LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
+#endif
+
+
+#if LOG_USE_COLOR
+    LOG_AppendString(buffer, &position, sizeof(buffer), LOG_COLOR_RESET);
 #endif
 
 #if (LOG_USE_TIMESTAMP || LOG_USE_LEVEL_TAG || LOG_USE_MODULE_NAME)
@@ -518,9 +526,6 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
 
     va_end(args);
 
-#if LOG_USE_COLOR
-    LOG_AppendString(buffer, &position, sizeof(buffer), LOG_COLOR_RESET);
-#endif
 
 #if LOG_USE_NEWLINE
     LOG_AppendString(buffer, &position, sizeof(buffer), "\r\n");
