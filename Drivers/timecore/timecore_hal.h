@@ -40,11 +40,11 @@
  * Selected Timer
  * ============================================================ */
 
-#pragma HARDWARE start
+#pragma USER start
 
 #define TIMECORE_HAL_TIMER            TIMECORE_HAL_TIMER_TIM2
 
-#pragma HARDWARE end
+#pragma USER end
 /* ============================================================
  * Timer Hardware Mapping
  * ============================================================ */

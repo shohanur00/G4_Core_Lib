@@ -24,7 +24,7 @@ typedef struct
 } GPIO_InitEntry_t;
 
 
-#pragma HARDWARE start
+#pragma USER start
 
 static const GPIO_InitEntry_t gpio_init_table[] =
 {
@@ -63,7 +63,7 @@ static const GPIO_HAL_Pin_t gpio_map[GPIO_COUNT] =
     
 };
 
-#pragma HARDWARE END
+#pragma USER END
 
 
 

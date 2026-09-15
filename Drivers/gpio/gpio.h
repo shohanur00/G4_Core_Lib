@@ -49,7 +49,7 @@
  * that mapping lives in BSP (board.h/.c).
  * ============================================================ */
 
-#pragma HARDWARE start
+#pragma USER start
 
 typedef enum
 {
@@ -60,7 +60,7 @@ typedef enum
 
 } GPIO_Name_t;
 
-#pragma HARDWARE END
+#pragma USER END
 
 /* ============================================================
  * GPIO - Pin State
