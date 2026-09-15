@@ -39,18 +39,22 @@ target_sources(${PROJECT_NAME} PRIVATE
   Services/Debug/debug.c
   Drivers/gpio/gpio_hal.c
   Drivers/systemclock/systemclock.c
-  Drivers/logger/logger.c
-  Drivers/logger/HAL/logger_hal.c
+  Services/Logger/Core/logger.c
+  Services/Logger/Core/logger_hal.c
+  Services/Logger/Backends/UART/logger_uart.c
 )
 
 # Add include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
   # User defined include directories
   ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS
-  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers
+  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/systemclock
+  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/gpio
+  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/timecore
   ${CMAKE_CURRENT_SOURCE_DIR}/App
   ${CMAKE_CURRENT_SOURCE_DIR}/BSP
-  ${CMAKE_CURRENT_SOURCE_DIR}/Services
+  ${CMAKE_CURRENT_SOURCE_DIR}/Services/Debug
+  ${CMAKE_CURRENT_SOURCE_DIR}/Services/Logger/Frontend
   ${CMAKE_CURRENT_SOURCE_DIR}/Config
 )
 

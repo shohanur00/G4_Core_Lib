@@ -3,19 +3,19 @@
 
 
 #if LOG_HAL_USE_UART
-#include "../Backend/UART/log_uart.h"
+#include "../Backends/UART/logger_uart.h"
 #endif
 
 #if LOG_HAL_USE_FLASH
-#include "../Backend/Flash/log_flash.h"
+#include "../Backends/Flash/logger_flash.h"
 #endif
 
 #if LOG_HAL_USE_USB
-#include "../Backend/USB/log_usb.h"
+#include "../Backends/USB/logger_usb.h"
 #endif
 
 #if LOG_HAL_USE_RTT
-#include "../Backend/RTT/log_rtt.h"
+#include "../Backends/RTT/logger_rtt.h"
 #endif
 
 

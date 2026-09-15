@@ -1,11 +1,10 @@
 /* Application module implementation. */
 #include "app.h"
-#include "gpio/gpio.h"
 #include "stm32g431xx.h"
-#include "systemclock/systemclock.h"
-#include "gpio/gpio.h"
+#include "systemclock.h"
+#include "gpio.h"
 #include "board.h"
-#include "timecore/timecore.h"
+#include "timecore.h"
 
 uint8_t LED_timer; // Define the GPIO pin for the LED
 
