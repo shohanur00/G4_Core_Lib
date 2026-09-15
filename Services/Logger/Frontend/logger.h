@@ -32,7 +32,7 @@
  *     %%  Literal '%' character
  *
  * @author  [Md. Shohanur Rahman]
- * @github  [https://github.com/shohanur00/G4_Core_Lib/tree/main/Drivers/logger]
+ * @github  [https://github.com/shohanur00/G4_Core_Lib/tree/main/Services/Logger/Frontend]
  * @linkedIn [https://www.linkedin.com/in/engr-shohanur-rahman-181a69250/]
  * @version [1.0.0]
  * @date    [14/09/2026]
@@ -69,6 +69,8 @@ extern "C" {
  *
  * Undefined macros use the default values below.
  * ============================================================ */
+
+#pragma USER  start
 
 #ifndef LOG_USE_TIMESTAMP
 #define LOG_USE_TIMESTAMP      1U   /* [00012345] external time reference */
@@ -124,6 +126,7 @@ typedef enum
 
 } LOG_Level_t;
 
+#pragma USER ends
 
 /* ============================================================
  * Logging Macros

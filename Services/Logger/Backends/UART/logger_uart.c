@@ -1,9 +1,10 @@
 #include "logger_uart.h"
 #include "board.h"
 #include <sys/_intsup.h>
+#include "systemclock.h"
 
 
-#define LOG_UART_CLOCK_FREQ_HZ    170000000U
+#define LOG_UART_CLOCK_FREQ_HZ    SYSTEMCLOCK_FREQ_HZ
 
 
 static USART_TypeDef *LOG_UART_GetInstance(void)

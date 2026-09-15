@@ -8,11 +8,15 @@ static LOG_Level_t module_levels[LOG_MODULE_MAX];
 static uint32_t log_timestamp = 0U; 
 
 
+#pragma USER start
+
 /* Human-readable names, indexed by enum value (extend as modules are added) */
 static const char *const module_names[LOG_MODULE_MAX] =
 {
     [LOG_MODULE_SYSTEM] = "SYSTEM"
 };
+
+#pragma USER ends
 
 static const char *const level_strings[LOG_LEVEL_CRITICAL + 1U] =
 {
@@ -264,7 +268,7 @@ void LOG_Init(void){
          module < LOG_MODULE_MAX;
          module++)
     {
-        module_levels[module] = LOG_LEVEL_INFO;
+        module_levels[module] = LOG_LEVEL_DEBUG;
     }
     LOG_HAL_Init();
 }
@@ -311,7 +315,7 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
         &position,
         sizeof(buffer),
         log_timestamp,
-        8
+        16
     );
     LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
 #endif
