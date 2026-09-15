@@ -150,7 +150,7 @@ uint8_t TimeCore_IsExpired(uint8_t timer_id);
  * @return
  * 1 when the timer expiration event occurs, otherwise 0.
  */
-uint8_t TimeCore_ContinuousExpiredEvent(uint8_t timer_id);
+uint8_t TimeCore_ContinousExpiredEvent(uint8_t timer_id);
 
 /**
  * @brief Check for a one-shot expiration event.

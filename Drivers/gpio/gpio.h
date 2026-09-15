@@ -54,7 +54,7 @@
 typedef enum
 {
     GPIO_LED,
-
+    LOG_UART_TX,
 
     GPIO_COUNT
 
