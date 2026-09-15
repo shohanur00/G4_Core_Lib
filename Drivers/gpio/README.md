@@ -99,11 +99,11 @@ Hardware-dependent GPIO information is intentionally separated from the generic 
 The following sections are marked using:
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 /* Hardware-specific configuration */
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 These sections identify the parts of the GPIO driver that normally need to be modified when adapting the library to a different board or hardware design.
@@ -115,7 +115,7 @@ These sections identify the parts of the GPIO driver that normally need to be mo
 The logical GPIO names are located inside the `HARDWARE` section of `gpio.h`:
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 typedef enum
 {
@@ -126,7 +126,7 @@ typedef enum
 
 } GPIO_Name_t;
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 When adding a new hardware-controlled GPIO, add its logical name here.
@@ -134,7 +134,7 @@ When adding a new hardware-controlled GPIO, add its logical name here.
 For example:
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 typedef enum
 {
@@ -147,7 +147,7 @@ typedef enum
 
 } GPIO_Name_t;
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 The application can then use:
@@ -167,7 +167,7 @@ Hardware-specific GPIO configuration is defined in `gpio.c` using a data-driven 
 The table is also enclosed within the `HARDWARE` section:
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 static const GPIO_InitEntry_t gpio_init_table[] =
 {
@@ -196,7 +196,7 @@ static const GPIO_InitEntry_t gpio_init_table[] =
     },
 };
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 Each row represents one logical GPIO and its startup configuration.
@@ -218,7 +218,7 @@ This avoids writing individual initialization functions for every GPIO.
 The logical GPIO names are mapped to actual MCU ports and pins inside the hardware section of `gpio.c`:
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 static const GPIO_HAL_Pin_t gpio_map[GPIO_COUNT] =
 {
@@ -235,7 +235,7 @@ static const GPIO_HAL_Pin_t gpio_map[GPIO_COUNT] =
     },
 };
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 The actual physical mapping is provided by `board.h`.
@@ -279,7 +279,7 @@ Adding a new GPIO normally requires changes only in the hardware-specific sectio
 In `gpio.h`:
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 typedef enum
 {
@@ -291,7 +291,7 @@ typedef enum
 
 } GPIO_Name_t;
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 ### Step 2 — Add physical mapping
@@ -308,7 +308,7 @@ In `board.h`:
 In `gpio.c`:
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 static const GPIO_InitEntry_t gpio_init_table[] =
 {
@@ -327,13 +327,13 @@ static const GPIO_InitEntry_t gpio_init_table[] =
     },
 };
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 ### Step 4 — Add the logical-to-physical mapping
 
 ```c
-#pragma HARDWARE start
+#pragma USER start
 
 static const GPIO_HAL_Pin_t gpio_map[GPIO_COUNT] =
 {
@@ -346,7 +346,7 @@ static const GPIO_HAL_Pin_t gpio_map[GPIO_COUNT] =
     },
 };
 
-#pragma HARDWARE END
+#pragma USER END
 ```
 
 The application can now simply use:
