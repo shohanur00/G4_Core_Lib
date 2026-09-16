@@ -23,6 +23,7 @@ set(PROJECT_NAME G4_Core_Lib)
 # Create an executable object type
 add_executable(${PROJECT_NAME})
 
+
 # Include additional CMake files for flags, components, and files
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/flags.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/components.cmake)
@@ -48,6 +49,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
   # User defined include directories
   ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS
+  ${CMAKE_CURRENT_SOURCE_DIR}/Version
   ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/systemclock
   ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/gpio
   ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/timecore
@@ -56,6 +58,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/Services/Debug
   ${CMAKE_CURRENT_SOURCE_DIR}/Services/Logger/Frontend
   ${CMAKE_CURRENT_SOURCE_DIR}/Config
+  ${CMAKE_BINARY_DIR}/generated
 )
 
 # Compiler options
@@ -82,4 +85,5 @@ target_link_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
   # Add additional linker libraries here
 )
+
 
