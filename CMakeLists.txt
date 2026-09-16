@@ -87,3 +87,66 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 
+
+
+
+
+
+# ===========================================================================
+#   FIRMWARE VERSIONING
+#   Auto-incrementing A.B.C version scheme (Major.Minor manual, Build auto)
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# 1. Version variables and paths
+# ---------------------------------------------------------------------------
+set(FW_VERSION_MAJOR 1)
+set(FW_VERSION_MINOR 0)
+
+set(VERSION_DIR              ${CMAKE_SOURCE_DIR}/Version)
+set(VERSION_STATE_FILE       ${VERSION_DIR}/version_state.txt)
+set(VERSION_TEMPLATE         ${VERSION_DIR}/version_config.h.in)
+set(VERSION_GENERATED_DIR    ${CMAKE_BINARY_DIR}/generated)
+set(VERSION_GENERATED_HEADER ${VERSION_GENERATED_DIR}/version_config.h)
+
+file(MAKE_DIRECTORY ${VERSION_GENERATED_DIR})
+
+# ---------------------------------------------------------------------------
+# 2. Custom target that regenerates the version header on every build
+#    (no tracked OUTPUT -> always re-runs, not just on CMake reconfigure)
+# ---------------------------------------------------------------------------
+add_custom_target(GenerateVersion ALL
+    COMMAND ${CMAKE_COMMAND}
+        -DFW_VERSION_MAJOR=${FW_VERSION_MAJOR}
+        -DFW_VERSION_MINOR=${FW_VERSION_MINOR}
+        -DSTATE_FILE=${VERSION_STATE_FILE}
+        -DTEMPLATE_FILE=${VERSION_TEMPLATE}
+        -DOUTPUT_FILE=${VERSION_GENERATED_HEADER}
+        -P ${VERSION_DIR}/generate_version.cmake
+    BYPRODUCTS ${VERSION_GENERATED_HEADER}
+    COMMENT "Bumping firmware build number"
+    VERBATIM
+)
+
+# ---------------------------------------------------------------------------
+# 3. Main executable target
+#    (already declared earlier in this file — must exist before this point)
+# ---------------------------------------------------------------------------
+# add_executable(${PROJECT_NAME})
+
+# ---------------------------------------------------------------------------
+# 4. Add version.c to the existing source list
+# ---------------------------------------------------------------------------
+target_sources(${PROJECT_NAME} PRIVATE
+    Version/version.c
+    # ... rest of your existing sources (Src/, App/, Drivers/, BSP/, Services/, etc.)
+)
+
+# ---------------------------------------------------------------------------
+# 5. Version-related include paths and build dependency
+# ---------------------------------------------------------------------------
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${VERSION_DIR}
+    ${VERSION_GENERATED_DIR}
+)
+add_dependencies(${PROJECT_NAME} GenerateVersion)

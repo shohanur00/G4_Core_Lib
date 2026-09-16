@@ -1,0 +1,36 @@
+foreach(_v FW_VERSION_MAJOR FW_VERSION_MINOR STATE_FILE TEMPLATE_FILE OUTPUT_FILE)
+    if(NOT DEFINED ${_v})
+        message(FATAL_ERROR "generate_version.cmake: missing ${_v}")
+    endif()
+endforeach()
+
+set(_prev_major -1)
+set(_prev_minor -1)
+set(_build 0)
+
+if(EXISTS ${STATE_FILE})
+    file(STRINGS ${STATE_FILE} _lines)
+    foreach(_line ${_lines})
+        if(_line MATCHES "^MAJOR=([0-9]+)$")
+            set(_prev_major ${CMAKE_MATCH_1})
+        elseif(_line MATCHES "^MINOR=([0-9]+)$")
+            set(_prev_minor ${CMAKE_MATCH_1})
+        elseif(_line MATCHES "^BUILD=([0-9]+)$")
+            set(_build ${CMAKE_MATCH_1})
+        endif()
+    endforeach()
+endif()
+
+if(NOT _prev_major STREQUAL "${FW_VERSION_MAJOR}" OR NOT _prev_minor STREQUAL "${FW_VERSION_MINOR}")
+    set(_build 0)
+    message(STATUS "Version: MAJOR/MINOR পরিবর্তন হয়েছে -> build 0-তে reset")
+else()
+    math(EXPR _build "${_build} + 1")
+endif()
+
+file(WRITE ${STATE_FILE} "MAJOR=${FW_VERSION_MAJOR}\nMINOR=${FW_VERSION_MINOR}\nBUILD=${_build}\n")
+
+set(FW_VERSION_BUILD ${_build})
+configure_file(${TEMPLATE_FILE} ${OUTPUT_FILE} @ONLY)
+
+message(STATUS "Firmware version -> ${FW_VERSION_MAJOR}.${FW_VERSION_MINOR}.${_build}")
