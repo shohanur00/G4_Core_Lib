@@ -37,6 +37,7 @@ void App_Loop(void)
         LOG_ERROR(LOG_MODULE_SYSTEM,"OVER Temperature!");
         LOG_CRITICAL(LOG_MODULE_SYSTEM,"System Failure!");
         // LOG_UART_Write("Hello", 5);
+        //LOG_Disable();
     }
     TimeCore_MainLoop(); // Call the main loop function for time-based tasks
     LOG_MainLoop(TimeCore_GetTick());

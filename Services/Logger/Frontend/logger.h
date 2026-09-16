@@ -194,6 +194,32 @@ void LOG_SetModuleLevel(
 );
 
 
+
+/**
+ * @brief Enable the global logging system.
+ *
+ * @details
+ * Enables log processing and output for all modules, subject
+ * to their individual log-level configuration.
+ *
+ * If logging was previously disabled, subsequent log requests
+ * will be processed normally.
+ */
+void LOG_Enable(void);
+
+/**
+ * @brief Disable the global logging system.
+ *
+ * @details
+ * Prevents new log messages from being formatted or submitted
+ * to the logging backend.
+ *
+ * Any transmission already in progress, such as an active UART
+ * DMA transfer, is not interrupted by this function.
+ */
+void LOG_Disable(void);
+
+
 /**
  * @brief Write a formatted log message.
  *

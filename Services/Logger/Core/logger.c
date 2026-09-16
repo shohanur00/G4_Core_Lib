@@ -6,6 +6,7 @@
 #define LOG_BUFFER_SIZE    128U
 static LOG_Level_t module_levels[LOG_MODULE_MAX];
 static uint32_t log_timestamp = 0U; 
+static volatile uint8_t log_enabled = 1U;
 
 
 #pragma USER start
@@ -273,6 +274,20 @@ void LOG_Init(void){
     LOG_HAL_Init();
 }
 
+
+void LOG_Enable(void) { 
+    
+    log_enabled = 1U; 
+
+}
+
+void LOG_Disable(void) { 
+    
+    log_enabled = 0U; 
+
+}
+
+
 void LOG_SetModuleLevel(LOG_Module_t module, LOG_Level_t level){
     // Set the logging level for the specified module
     if (module >= LOG_MODULE_MAX)
@@ -294,7 +309,7 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
      * module index is invalid or this message is below the module's
      * configured threshold.
      */
-    if ((module >= LOG_MODULE_MAX) || (level < module_levels[module]))
+    if ((module >= LOG_MODULE_MAX) || (level < module_levels[module]) || (log_enabled == 0U))
     {
         return;
     }
