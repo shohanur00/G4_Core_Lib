@@ -4,9 +4,21 @@
 
 
 #define LOG_BUFFER_SIZE    128U
-static LOG_Level_t module_levels[LOG_MODULE_MAX];
-static uint32_t log_timestamp = 0U; 
-static volatile uint8_t log_enabled = 1U;
+
+typedef struct
+{
+    LOG_Level_t module_levels[LOG_MODULE_MAX];
+    uint32_t timestamp;
+    uint8_t enabled;
+
+} LOG_State_t;
+
+
+static LOG_State_t log_state =
+{
+    .timestamp = 0U,
+    .enabled = 1U
+};
 
 
 #pragma USER start
@@ -269,7 +281,7 @@ void LOG_Init(void){
          module < LOG_MODULE_MAX;
          module++)
     {
-        module_levels[module] = LOG_LEVEL_DEBUG;
+        log_state.module_levels[module] = LOG_LEVEL_DEBUG;
     }
     LOG_HAL_Init();
 }
@@ -277,13 +289,13 @@ void LOG_Init(void){
 
 void LOG_Enable(void) { 
     
-    log_enabled = 1U; 
+    log_state.enabled = 1U; 
 
 }
 
 void LOG_Disable(void) { 
     
-    log_enabled = 0U; 
+    log_state.enabled = 0U; 
 
 }
 
@@ -300,7 +312,7 @@ void LOG_SetModuleLevel(LOG_Module_t module, LOG_Level_t level){
         return;
     }
 
-    module_levels[module] = level; 
+    log_state.module_levels[module] = level; 
 }
 
 void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
@@ -309,7 +321,7 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
      * module index is invalid or this message is below the module's
      * configured threshold.
      */
-    if ((module >= LOG_MODULE_MAX) || (level < module_levels[module]) || (log_enabled == 0U))
+    if ((module >= LOG_MODULE_MAX) || (level < log_state.module_levels[module]) || (log_state.enabled == 0U))
     {
         return;
     }
@@ -329,7 +341,7 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
         buffer,
         &position,
         sizeof(buffer),
-        log_timestamp,
+        log_state.timestamp,
         16
     );
     LOG_AppendChar(buffer, &position, sizeof(buffer), ']');
@@ -558,6 +570,6 @@ void LOG_Write(LOG_Module_t module, LOG_Level_t level, const char *format, ...){
 void LOG_MainLoop(uint32_t ref_time)
 {
     #if LOG_USE_TIMESTAMP
-        log_timestamp = ref_time;
+        log_state.timestamp = ref_time;
     #endif
 }
