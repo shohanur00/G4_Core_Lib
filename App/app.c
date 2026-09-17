@@ -9,8 +9,6 @@
 #include "version.h"
 
 
-
-
 uint8_t LED_timer; // Define the GPIO pin for the LED
 
 void App_Setup(void)
@@ -41,7 +39,7 @@ void App_Loop(void)
         LOG_ERROR(LOG_MODULE_SYSTEM,"OVER Temperature!");
         LOG_CRITICAL(LOG_MODULE_SYSTEM,"System Failure!");
         // LOG_UART_Write("Hello", 5);
-        // LOG_Disable();
+        LOG_Disable();
     }
     TimeCore_MainLoop(); // Call the main loop function for time-based tasks
     LOG_MainLoop(TimeCore_GetTick());
