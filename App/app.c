@@ -21,7 +21,7 @@ void App_Setup(void)
     LED_timer = TimeCore_CreateTimer(200); // Create a timer for 200 ms
     TimeCore_SetDurationSecurely(LED_timer, 1000); // Set the timer duration to 5000 ms
     TimeCore_StartTimer(LED_timer);
-  
+    
     // Implementation for application setup
 }
 
