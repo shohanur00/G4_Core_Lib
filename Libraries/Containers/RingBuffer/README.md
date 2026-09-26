@@ -1,4 +1,4 @@
-<div align="center">
+<!-- <div align="center"> -->
 
 # 🔁 Ring Buffer
 
@@ -9,7 +9,7 @@
 ![Platform](https://img.shields.io/badge/platform-MCU%20agnostic-lightgrey)
 ![Part of](https://img.shields.io/badge/part%20of-G4__Core__Lib-orange)
 
-</div>
+<!-- </div> -->
 
 Designed for resource-constrained embedded systems where dynamic memory allocation is avoided.
 
