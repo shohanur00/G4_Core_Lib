@@ -44,8 +44,11 @@ target_sources(${PROJECT_NAME} PRIVATE
   Services/logger/core/logger_hal.c
   Services/logger/backends/uart/logger_uart.c
   Libraries/bit/bit.c
-  Libraries/math/basic.c
+  Libraries/math/mbasic.c
   Libraries/containers/ringbuffer/ring_buffer.c
+  Libraries/math/map.c
+  Libraries/math/interpolation.c
+  Libraries/math/fixedpoint.c
 )
 
 # Add include directories
