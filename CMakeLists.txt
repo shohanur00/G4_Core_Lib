@@ -43,6 +43,9 @@ target_sources(${PROJECT_NAME} PRIVATE
   Services/Logger/Core/logger.c
   Services/Logger/Core/logger_hal.c
   Services/Logger/Backends/UART/logger_uart.c
+  Libraries/Bit/bit.c
+  Libraries/Math/basic.c
+  Libraries/Containers/RingBuffer/ring_buffer.c
 )
 
 # Add include directories
