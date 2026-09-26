@@ -1,5 +1,5 @@
 #include "timecore_hal.h"
-#include "systemclock.h"
+#include "systemclock/systemclock.h"
 
 
 /* ============================================================

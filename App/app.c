@@ -1,11 +1,11 @@
 /* Application module implementation. */
 #include "app.h"
 #include "stm32g431xx.h"
-#include "systemclock.h"
-#include "gpio.h"
+#include "systemclock/systemclock.h"
+#include "gpio/gpio.h"
 #include "board.h"
-#include "timecore.h"
-#include "logger.h"
+#include "timecore/timecore.h"
+#include "logger/frontend/logger.h"
 #include "version.h"
 
 

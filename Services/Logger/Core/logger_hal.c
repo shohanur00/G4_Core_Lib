@@ -3,7 +3,7 @@
 
 
 #if LOG_HAL_USE_UART
-    #include "../Backends/UART/logger_uart.h"
+    #include "../backends/uart/logger_uart.h"
 #endif
 
 #if LOG_HAL_USE_FLASH

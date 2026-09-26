@@ -1,7 +1,7 @@
 #include "logger_uart.h"
 #include "board.h"
 #include <sys/_intsup.h>
-#include "systemclock.h"
+#include "systemclock/systemclock.h"
 
 
 #define LOG_UART_CLOCK_FREQ_HZ    SYSTEMCLOCK_FREQ_HZ

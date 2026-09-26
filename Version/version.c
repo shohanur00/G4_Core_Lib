@@ -2,7 +2,7 @@
 
 #include "version_config.h"
 
-#include "logger.h"
+#include "logger/frontend/logger.h"
 
 
 /**

@@ -37,15 +37,15 @@ target_sources(${PROJECT_NAME} PRIVATE
   Drivers/gpio/gpio.c
   Drivers/timecore/timecore.c
   Drivers/timecore/timecore_hal.c
-  Services/Debug/debug.c
+  Services/debug/debug.c
   Drivers/gpio/gpio_hal.c
   Drivers/systemclock/systemclock.c
-  Services/Logger/Core/logger.c
-  Services/Logger/Core/logger_hal.c
-  Services/Logger/Backends/UART/logger_uart.c
-  Libraries/Bit/bit.c
-  Libraries/Math/basic.c
-  Libraries/Containers/RingBuffer/ring_buffer.c
+  Services/logger/core/logger.c
+  Services/logger/core/logger_hal.c
+  Services/logger/backends/uart/logger_uart.c
+  Libraries/bit/bit.c
+  Libraries/math/basic.c
+  Libraries/containers/ringbuffer/ring_buffer.c
 )
 
 # Add include directories
@@ -53,14 +53,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   # User defined include directories
   ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS
   ${CMAKE_CURRENT_SOURCE_DIR}/Version
-  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/systemclock
-  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/gpio
-  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/timecore
+  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers
   ${CMAKE_CURRENT_SOURCE_DIR}/App
   ${CMAKE_CURRENT_SOURCE_DIR}/BSP
-  ${CMAKE_CURRENT_SOURCE_DIR}/Services/Debug
-  ${CMAKE_CURRENT_SOURCE_DIR}/Services/Logger/Frontend
+  ${CMAKE_CURRENT_SOURCE_DIR}/Services
+  ${CMAKE_CURRENT_SOURCE_DIR}/Services
   ${CMAKE_CURRENT_SOURCE_DIR}/Config
+  ${CMAKE_CURRENT_SOURCE_DIR}/Libraries
   ${CMAKE_BINARY_DIR}/generated
 )
 
