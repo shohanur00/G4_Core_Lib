@@ -9,9 +9,11 @@
 ![Platform](https://img.shields.io/badge/platform-MCU%20agnostic-lightgrey)
 ![Part of](https://img.shields.io/badge/part%20of-G4__Core__Lib-orange)
 
+<p>Designed for resource-constrained embedded systems where dynamic memory allocation is avoided.</p>
+
 </div>
 
-Designed for resource-constrained embedded systems where dynamic memory allocation is avoided.
+
 
 ## Contents
 
