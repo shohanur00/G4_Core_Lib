@@ -49,6 +49,13 @@ target_sources(${PROJECT_NAME} PRIVATE
   Libraries/math/map.c
   Libraries/math/interpolation.c
   Libraries/math/fixedpoint.c
+  Bootloader/core/bootloader.c
+  Bootloader/image/image.c
+  Bootloader/image/image.h
+  Bootloader/protocol/boot_protocol.c
+  Bootloader/transport/bootloader_uart.c
+  Drivers/uart/uart_driver.c 
+  HAL/uart/uart_hal.c
 )
 
 # Add include directories
@@ -63,6 +70,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/Services
   ${CMAKE_CURRENT_SOURCE_DIR}/Config
   ${CMAKE_CURRENT_SOURCE_DIR}/Libraries
+  ${CMAKE_CURRENT_SOURCE_DIR}/HAL
   ${CMAKE_BINARY_DIR}/generated
 )
 
