@@ -1,5 +1,5 @@
 #include "bootloader_uart.h"
-#include "uart_driver.h"
+#include "uart/uart_driver.h"
 #include "board.h"
 
 void Bootloader_UART_Init(void)
