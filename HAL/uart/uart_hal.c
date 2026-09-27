@@ -1,6 +1,7 @@
 
 #include "uart_hal.h"
-#include "uart_driver.h"
+#include "stm32g431xx.h"
+
 
 /* ============================================================================
  * Private Configuration
