@@ -71,6 +71,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/Config
   ${CMAKE_CURRENT_SOURCE_DIR}/Libraries
   ${CMAKE_CURRENT_SOURCE_DIR}/HAL
+  ${CMAKE_CURRENT_SOURCE_DIR}/Bootloader
   ${CMAKE_BINARY_DIR}/generated
 )
 

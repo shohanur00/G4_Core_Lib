@@ -55,7 +55,8 @@ typedef enum
 {
     GPIO_LED,
     LOG_UART_TX,
-    LOG_UART_RX,
+    BOOTLOADER_UART_TX,
+    BOOTLOADER_UART_RX,
     GPIO_COUNT
 
 } GPIO_Name_t;

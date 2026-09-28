@@ -7,6 +7,7 @@
 #include "timecore/timecore.h"
 #include "logger/frontend/logger.h"
 #include "version.h"
+#include "transport/bootloader_uart.h"
 
 
 uint8_t LED_timer; // Define the GPIO pin for the LED
@@ -18,6 +19,7 @@ void App_Setup(void)
     TimeCore_Init();
     LOG_Init();
     Version_LOG();
+    Bootloader_UART_Init();
     LED_timer = TimeCore_CreateTimer(200); // Create a timer for 200 ms
     TimeCore_SetDurationSecurely(LED_timer, 1000); // Set the timer duration to 5000 ms
     TimeCore_StartTimer(LED_timer);
@@ -39,7 +41,8 @@ void App_Loop(void)
         LOG_ERROR(LOG_MODULE_SYSTEM,"OVER Temperature!");
         LOG_CRITICAL(LOG_MODULE_SYSTEM,"System Failure!");
         // LOG_UART_Write("Hello", 5);
-        // LOG_Disable();
+        Bootloader_UART_Write("Hello\r\n", 7U);
+        LOG_Disable();
     }
     TimeCore_MainLoop(); // Call the main loop function for time-based tasks
     LOG_MainLoop(TimeCore_GetTick());

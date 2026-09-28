@@ -2,6 +2,7 @@
 #include "uart_hal.h"
 #include "stm32g431xx.h"
 #include "cdefs/cdefs.h"
+#include "systemclock/systemclock.h"
 
 
 /* ============================================================================
@@ -61,7 +62,7 @@ static void UART_HAL_EnableClock(USART_TypeDef *uart)
  */
 static uint32_t UART_HAL_GetClockHz(void)
 {
-    return SystemCoreClock;
+    return SYSTEMCLOCK_FREQ_HZ;
 }
 
 /**
