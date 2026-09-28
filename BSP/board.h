@@ -2,6 +2,7 @@
 #define BOARD_H
 
 #include "stm32g431xx.h"
+#include "cdefs/cdefs.h"
 
 
 /* ============================================================================
@@ -49,10 +50,10 @@
  * ========================================================================== */
 
 #define BOOTLOADER_UART_INSTANCE            3U
-#define BOOTLOADER_UART_TX_ENABLE           UART_ENABLE
-#define BOOTLOADER_UART_TX_INTERRUPT        0U
-#define BOOTLOADER_UART_RX_ENABLE           UART_ENABLE
-#define BOOTLOADER_UART_RX_INTERRUPT        1U
+#define BOOTLOADER_UART_TX_ENABLE           ENABLE
+#define BOOTLOADER_UART_TX_INTERRUPT        DISABLE
+#define BOOTLOADER_UART_RX_ENABLE           ENABLE
+#define BOOTLOADER_UART_RX_INTERRUPT        ENABLE
 #define BOOTLOADER_UART_BAUDRATE            115200U
 #define BOOTLOADER_UART_PARITY              UART_PARITY_NONE
 #define BOOTLOADER_UART_STOP_BITS           UART_STOPBITS_1
@@ -75,15 +76,15 @@
  *
  * ========================================================================== */
 
-#define BOOTLOADER_UART_DMA_TX_ENABLE    0U
-#define BOOTLOADER_UART_DMA_RX_ENABLE    0U
+#define BOOTLOADER_UART_DMA_TX_ENABLE    DISABLE
+#define BOOTLOADER_UART_DMA_RX_ENABLE    DISABLE
 
 #define BOOTLOADER_UART_DMA_TX_CHANNEL   1U
 #define BOOTLOADER_UART_DMA_RX_CHANNEL   2U
 
 /* DMAMUX request selection */
-#define BOOTLOADER_UART_DMA_TX_REQUEST   0U
-#define BOOTLOADER_UART_DMA_RX_REQUEST   0U
+#define BOOTLOADER_UART_DMA_TX_REQUEST   DISABLE
+#define BOOTLOADER_UART_DMA_RX_REQUEST   DISABLE
 
 
 /* ============================================================================
