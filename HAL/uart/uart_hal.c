@@ -1,6 +1,7 @@
 
 #include "uart_hal.h"
 #include "stm32g431xx.h"
+#include "cdefs/cdefs.h"
 
 
 /* ============================================================================
@@ -105,11 +106,17 @@ static DMAMUX_Channel_TypeDef *UART_HAL_GetDMAMUXChannel(
  * UART Initialization
  * ========================================================================== */
 
+/* ============================================================================
+ * UART Initialization
+ * ========================================================================== */
+
 void UART_HAL_Init(
     USART_TypeDef *uart,
-    uint32_t baudrate,
-    uint32_t parity,
-    uint32_t stop_bits
+    uint8_t        tx_enable,
+    uint8_t        rx_enable,
+    uint32_t       baudrate,
+    uint8_t        parity,
+    uint8_t        stop_bits
 )
 {
     uint32_t uart_clock;
@@ -133,21 +140,17 @@ void UART_HAL_Init(
     /* Configure parity and word length */
     switch (parity)
     {
-        case UART_PARITY_NONE:
-            /* 8 data bits, no parity */
+        case 0U: /* No parity: 8 data bits */
             break;
 
-        case UART_PARITY_EVEN:
-            /* 8 data bits + parity bit */
-            uart->CR1 |= USART_CR1_M0;
-            uart->CR1 |= USART_CR1_PCE;
+        case 1U: /* Even parity: 8 data bits + parity */
+            uart->CR1 |= USART_CR1_M0 | USART_CR1_PCE;
             break;
 
-        case UART_PARITY_ODD:
-            /* 8 data bits + parity bit */
-            uart->CR1 |= USART_CR1_M0;
-            uart->CR1 |= USART_CR1_PCE;
-            uart->CR1 |= USART_CR1_PS;
+        case 2U: /* Odd parity: 8 data bits + parity */
+            uart->CR1 |= USART_CR1_M0 |
+                         USART_CR1_PCE |
+                         USART_CR1_PS;
             break;
 
         default:
@@ -157,10 +160,10 @@ void UART_HAL_Init(
     /* Configure stop bits */
     switch (stop_bits)
     {
-        case UART_STOPBITS_1:
+        case 0U: /* 1 stop bit */
             break;
 
-        case UART_STOPBITS_2:
+        case 1U: /* 2 stop bits */
             uart->CR2 |= USART_CR2_STOP_1;
             break;
 
@@ -171,15 +174,28 @@ void UART_HAL_Init(
     /* Configure baud rate: oversampling by 16 */
     uart_clock = UART_HAL_GetClockHz();
 
+    if (uart_clock == 0U)
+    {
+        return;
+    }
+
     uart->BRR = (uart_clock + (baudrate / 2U)) / baudrate;
 
-    /* Enable transmitter and receiver */
-    uart->CR1 |= USART_CR1_TE | USART_CR1_RE;
+    /* Enable transmitter */
+    if (tx_enable != 0U)
+    {
+        uart->CR1 |= USART_CR1_TE;
+    }
+
+    /* Enable receiver */
+    if (rx_enable != 0U)
+    {
+        uart->CR1 |= USART_CR1_RE;
+    }
 
     /* Enable UART */
     uart->CR1 |= USART_CR1_UE;
 }
-
 
 /* ============================================================================
  * UART RX Interrupt Enable
@@ -212,14 +228,19 @@ void UART_HAL_Rx_Interrupt_Enable(
     {
         NVIC_EnableIRQ(USART3_IRQn);
     }
+
+#if defined(UART4)
     else if (uart == UART4)
     {
         NVIC_EnableIRQ(UART4_IRQn);
     }
+#endif
+#if defined(UART5)
     else if (uart == UART5)
     {
         NVIC_EnableIRQ(UART5_IRQn);
     }
+#endif
     else if (uart == LPUART1)
     {
         NVIC_EnableIRQ(LPUART1_IRQn);
@@ -258,14 +279,18 @@ void UART_HAL_Tx_Interrupt_Enable(
     {
         NVIC_EnableIRQ(USART3_IRQn);
     }
+#if defined(UART4)
     else if (uart == UART4)
     {
         NVIC_EnableIRQ(UART4_IRQn);
     }
+#endif
+#if defined(UART5)
     else if (uart == UART5)
     {
         NVIC_EnableIRQ(UART5_IRQn);
     }
+#endif 
     else if (uart == LPUART1)
     {
         NVIC_EnableIRQ(LPUART1_IRQn);
@@ -350,4 +375,18 @@ void UART_HAL_Write(
     while ((uart->ISR & USART_ISR_TC) == 0U)
     {
     }
+}
+
+
+/* ============================================================================
+ * UART DMA Write
+ * ========================================================================== */
+
+void UART_HAL_DMA_Write(
+    USART_TypeDef *uart,
+    const uint8_t *data,
+    uint32_t       length
+)
+{
+    /* DMA TX implementation will be added here */
 }

@@ -18,20 +18,35 @@
  *   4U - UART4
  *   5U - UART5
  *   6U - LPUART1
- *
+ *   0U - DISABLE
  * ========================================================================== */
 
-#define LOG_UART_INSTANCE            3U
+#define LOG_UART_ENABLE              DISABLE
+
 #define LOG_UART_BAUDRATE            115200U
 #define LOG_UART_PARITY              UART_PARITY_NONE
 #define LOG_UART_STOP_BITS           UART_STOPBITS_1
 
+#if LOG_UART_ENABLE != DISABLE
+
+#define 
+#define LOG_UART_INSTANCE            3U
 #define LOG_UART_TX_PORT             GPIOB
 #define LOG_UART_TX_PIN              9U
 
 #define LOG_UART_RX_PORT             GPIOB
 #define LOG_UART_RX_PIN              11U
 
+#else
+
+#define LOG_UART_INSTANCE            0U
+#define LOG_UART_TX_PORT             NULL
+#define LOG_UART_TX_PIN              0
+
+#define LOG_UART_RX_PORT             NULL
+#define LOG_UART_RX_PIN              0
+
+#endif
 
 /* ============================================================================
  * Bootloader UART Configuration

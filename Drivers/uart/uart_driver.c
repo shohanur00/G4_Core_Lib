@@ -60,6 +60,8 @@ void UART_Driver_Init(
 
         case 4U:
 
+        #if defined(UART4)
+
             UART_HAL_Init(
                 UART4,
                 tx_enable,
@@ -68,11 +70,15 @@ void UART_Driver_Init(
                 parity,
                 stop_bits
             );
+            
+        #endif
 
             break;
 
 
         case 5U:
+
+        #if defined(UART5)
 
             UART_HAL_Init(
                 UART5,
@@ -82,6 +88,8 @@ void UART_Driver_Init(
                 parity,
                 stop_bits
             );
+            
+        #endif
 
             break;
 
@@ -129,11 +137,17 @@ void UART_Driver_Rx_Interrupt_Enable(
             break;
 
         case 4U:
+            #if defined(UART4)
             UART_HAL_Rx_Interrupt_Enable(UART4);
+            #endif
             break;
 
         case 5U:
+           #if defined(UART5)
+
             UART_HAL_Rx_Interrupt_Enable(UART5);
+
+            #endif 
             break;
 
         case 6U:
@@ -169,11 +183,21 @@ void UART_Driver_Tx_Interrupt_Enable(
             break;
 
         case 4U:
+            
+        #if defined(UART4)
             UART_HAL_Tx_Interrupt_Enable(UART4);
+        #endif
+
             break;
 
         case 5U:
+
+        #if defined(UART5)
+
             UART_HAL_Tx_Interrupt_Enable(UART5);
+            
+        # endif
+
             break;
 
         case 6U:
@@ -223,19 +247,26 @@ void UART_Driver_Write(
             break;
 
         case 4U:
+
+        #if defined(UART4)
+
             UART_HAL_Write(
                 UART4,
                 data,
                 length
             );
+
+        #endif
             break;
 
         case 5U:
+        #if defined(UART5)
             UART_HAL_Write(
                 UART5,
                 data,
                 length
             );
+        #endif
             break;
 
         case 6U:
@@ -289,19 +320,28 @@ void UART_Driver_DMA_Tx_Init(
             break;
 
         case 4U:
+
+        #if defined(UART4)
+
             UART_HAL_DMA_Tx_Init(
                 UART4,
                 dma_channel,
                 dma_request
             );
+
+        #endif
             break;
 
         case 5U:
+
+        #if defined(UART5)
+
             UART_HAL_DMA_Tx_Init(
                 UART5,
                 dma_channel,
                 dma_request
             );
+        #endif
             break;
 
         case 6U:
@@ -355,19 +395,30 @@ void UART_Driver_DMA_Rx_Init(
             break;
 
         case 4U:
+            
+        #if defined(UART4)
+
             UART_HAL_DMA_Rx_Init(
                 UART4,
                 dma_channel,
                 dma_request
             );
+        
+        #endif
+
             break;
 
         case 5U:
+
+        #if defined(UART5)
             UART_HAL_DMA_Rx_Init(
                 UART5,
                 dma_channel,
                 dma_request
             );
+
+        #endif
+
             break;
 
         case 6U:
@@ -375,6 +426,82 @@ void UART_Driver_DMA_Rx_Init(
                 LPUART1,
                 dma_channel,
                 dma_request
+            );
+            break;
+
+        default:
+            break;
+    }
+}
+
+
+
+/* ============================================================================
+ * UART DMA Write
+ * ========================================================================== */
+
+void UART_Driver_DMA_Write(
+    uint8_t        instance,
+    const uint8_t *data,
+    uint32_t       length
+)
+{
+    switch (instance)
+    {
+        case 1U:
+            UART_HAL_DMA_Write(
+                USART1,
+                data,
+                length
+            );
+            break;
+
+        case 2U:
+            UART_HAL_DMA_Write(
+                USART2,
+                data,
+                length
+            );
+            break;
+
+        case 3U:
+            UART_HAL_DMA_Write(
+                USART3,
+                data,
+                length
+            );
+            break;
+
+        case 4U:
+
+        #if defined(UART4)
+
+            UART_HAL_DMA_Write(
+                UART4,
+                data,
+                length
+            );
+
+        #endif
+            break;
+
+        case 5U:
+
+        #if defined(UART5)
+            UART_HAL_DMA_Write(
+                UART5,
+                data,
+                length
+            );
+        #endif
+
+            break;
+
+        case 6U:
+            UART_HAL_DMA_Write(
+                LPUART1,
+                data,
+                length
             );
             break;
 

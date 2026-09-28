@@ -28,7 +28,7 @@ static USART_TypeDef *LOG_UART_GetInstance(void)
         return LPUART1;
 
     #else
-    #error "Unsupported LOG_UART_INSTANCE"
+    #warning "LOG IS DISABLED!"
     #endif
 }
 
@@ -61,7 +61,7 @@ static void LOG_UART_ClockEnable(void)
 
     #else
 
-    #error "Unsupported LOG_UART_INSTANCE"
+    #warning "LOG IS DISABLED!"
 
     #endif
 }

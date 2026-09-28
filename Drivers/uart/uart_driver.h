@@ -101,4 +101,16 @@ void UART_Driver_DMA_Rx_Init(
     uint32_t dma_request
 );
 
+
+/* ============================================================================
+ * UART DMA Write
+ * ========================================================================== */
+
+void UART_Driver_DMA_Write(
+    uint8_t        instance,
+    const uint8_t *data,
+    uint32_t       length
+);
+
+
 #endif /* UART_DRIVER_H */

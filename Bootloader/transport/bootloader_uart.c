@@ -59,3 +59,34 @@ void Bootloader_UART_Init(void)
 
 #endif
 }
+
+
+
+
+/* ============================================================================
+ * Bootloader UART Write
+ * ========================================================================== */
+
+void Bootloader_UART_Write(
+    const uint8_t *data,
+    uint32_t       length
+)
+{
+#if BOOTLOADER_UART_DMA_TX_ENABLE
+
+    UART_Driver_DMA_Write(
+        BOOTLOADER_UART_INSTANCE,
+        data,
+        length
+    );
+
+#else
+
+    UART_Driver_Write(
+        BOOTLOADER_UART_INSTANCE,
+        data,
+        length
+    );
+
+#endif
+}
