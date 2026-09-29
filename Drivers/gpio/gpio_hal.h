@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 #include "stm32g431xx.h"
-#include <stddef.h>
+#include "cdefs/cdefs.h"
 
 
 /* ============================================================

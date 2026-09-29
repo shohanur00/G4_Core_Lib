@@ -168,14 +168,26 @@ static GPIO_HAL_State_t ToHalState(GPIO_State_t state)
     return gpio_map[name];
 }
 
+
 static void ApplyConfig(GPIO_Name_t name, const GPIO_Config_t *config)
 {
     GPIO_HAL_Config_t hal_config;
 
-    hal_config.pin                = GPIO_GetPin(name);
+    if (config == NULL)
+    {
+        return;
+    }
+
+    hal_config.pin = GPIO_GetPin(name);
+
+    if (hal_config.pin.port == NULL)
+    {
+        return;
+    }
+
     hal_config.mode               = ToHalMode(config->mode);
     hal_config.output_type        = ToHalOutputType(config->output_type);
-    hal_config.pull                = ToHalPull(config->pull);
+    hal_config.pull               = ToHalPull(config->pull);
     hal_config.speed              = ToHalSpeed(config->speed);
     hal_config.alternate_function = (GPIO_HAL_AF_t)config->alternate_function;
     hal_config.initial_state      = ToHalState(config->initial_state);

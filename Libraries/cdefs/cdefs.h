@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stddef.h>
+// #include <stddef.h>
 
 /* ============================================================================
  * Common Definitions
@@ -24,6 +24,10 @@
 
 #define TRUE            1U
 #define FALSE           0U
+
+#ifndef NULL
+#define NULL            ((void *)0)
+#endif
 
 /* ============================================================================
  * Common Utilities

@@ -33,7 +33,6 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/files.cmake)
 target_sources(${PROJECT_NAME} PRIVATE
   # User defined sources
   App/app.c
-  BSP/board.c
   Drivers/gpio/gpio.c
   Drivers/timecore/timecore.c
   Drivers/timecore/timecore_hal.c
@@ -56,6 +55,7 @@ target_sources(${PROJECT_NAME} PRIVATE
   Bootloader/transport/bootloader_uart.c
   Drivers/uart/uart_driver.c 
   HAL/uart/uart_hal.c
+  
 )
 
 # Add include directories

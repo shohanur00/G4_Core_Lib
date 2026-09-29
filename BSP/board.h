@@ -60,6 +60,11 @@
  *
  * ========================================================================== */
 
+#define BOOTLOADER_USE_UART                 ENABLE
+#define BOOTLOADER_USE_USB                  DISABLE
+#define BOOTLOADER_USE_OTA                  DISABLE
+
+
 #define BOOTLOADER_UART_INSTANCE            3U
 #define BOOTLOADER_UART_TX_ENABLE           ENABLE
 #define BOOTLOADER_UART_TX_INTERRUPT        DISABLE
@@ -69,11 +74,22 @@
 #define BOOTLOADER_UART_PARITY              UART_PARITY_NONE
 #define BOOTLOADER_UART_STOP_BITS           UART_STOPBITS_1
 
+#if BOOTLOADER_USE_UART == ENABLE
 #define BOOTLOADER_UART_TX_PORT             GPIOB
 #define BOOTLOADER_UART_TX_PIN              9U
 
 #define BOOTLOADER_UART_RX_PORT             GPIOB
 #define BOOTLOADER_UART_RX_PIN              11U
+
+#else
+
+#define BOOTLOADER_UART_TX_PORT             NULL
+#define BOOTLOADER_UART_TX_PIN              9U
+
+#define BOOTLOADER_UART_RX_PORT             NULL
+#define BOOTLOADER_UART_RX_PIN              11U
+
+#endif
 
 #define BOOTLOADER_UART_DMA_TX_ENABLE       DISABLE
 #define BOOTLOADER_UART_DMA_RX_ENABLE       DISABLE
