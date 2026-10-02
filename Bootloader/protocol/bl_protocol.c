@@ -15,7 +15,7 @@ static uint16_t BL_Protocol_ComputeCRC(
     const BL_Protocol_Packet_t *packet
 )
 {
-    uint8_t crc_data[BL_PROTOCOL_MAX_DATA_SIZE + 1U];
+    uint8_t crc_data[BL_PROTOCOL_MAX_LENGTH];
 
     if (packet == NULL)
     {
@@ -25,16 +25,19 @@ static uint16_t BL_Protocol_ComputeCRC(
     /*
      * CRC covers:
      *
-     * [LENGTH] [DATA...]
+     * [LENGTH] [TYPE] [COMMAND] [DATA...]
      *
      * SOF is not included.
      */
 
     crc_data[0] = packet->length;
+    crc_data[1] = packet->type;
+    crc_data[2] = packet->command;
 
-    for (uint8_t i = 0U; i < packet->length; i++)
+    for (uint8_t i = 0U; i < packet->length -
+                             BL_PROTOCOL_FIXED_DATA_SIZE; i++)
     {
-        crc_data[1U + i] = packet->data[i];
+        crc_data[3U + i] = packet->data[i];
     }
 
     return CRC16_CCITT_FALSE(
@@ -56,6 +59,7 @@ bool BL_Protocol_PacketToBytes(
 )
 {
     uint16_t frame_length;
+    uint8_t  data_length;
 
     if ((packet == NULL) ||
         (buffer == NULL) ||
@@ -64,21 +68,36 @@ bool BL_Protocol_PacketToBytes(
         return false;
     }
 
-    if (packet->length > BL_PROTOCOL_MAX_DATA_SIZE)
+    /*
+     * LENGTH represents:
+     *
+     * TYPE + COMMAND + DATA
+     */
+
+    if (packet->length < BL_PROTOCOL_MIN_LENGTH)
     {
         return false;
     }
 
+    if (packet->length > BL_PROTOCOL_MAX_LENGTH)
+    {
+        return false;
+    }
+
+    data_length =
+        (uint8_t)(packet->length -
+                  BL_PROTOCOL_FIXED_DATA_SIZE);
+
     /*
      * Frame:
      *
-     * [SOF] [LENGTH] [DATA...] [CRC_H] [CRC_L]
+     * [SOF] [LENGTH] [TYPE] [COMMAND] [DATA...] [CRC_H] [CRC_L]
      *
-     * Total = 1 + 1 + DATA + 2
-     *       = 4 + DATA length
+     * Total = 4 + LENGTH
      */
 
-    frame_length = BL_PROTOCOL_OVERHEAD_SIZE + packet->length;
+    frame_length =
+        BL_PROTOCOL_OVERHEAD_SIZE + packet->length;
 
     if (buffer_size < frame_length)
     {
@@ -88,19 +107,22 @@ bool BL_Protocol_PacketToBytes(
     buffer[0] = packet->sof;
     buffer[1] = packet->length;
 
-    for (uint8_t i = 0U; i < packet->length; i++)
+    buffer[2] = packet->type;
+    buffer[3] = packet->command;
+
+    for (uint8_t i = 0U; i < data_length; i++)
     {
-        buffer[2U + i] = packet->data[i];
+        buffer[4U + i] = packet->data[i];
     }
 
     /*
      * CRC is transmitted MSB first.
      */
 
-    buffer[2U + packet->length] =
+    buffer[4U + data_length] =
         (uint8_t)(packet->crc >> 8U);
 
-    buffer[3U + packet->length] =
+    buffer[5U + data_length] =
         (uint8_t)(packet->crc & 0xFFU);
 
     *length = frame_length;
@@ -122,6 +144,7 @@ bool BL_Protocol_BytesToPacket(
     uint16_t frame_length;
     uint16_t received_crc;
     uint16_t calculated_crc;
+    uint8_t  data_length;
 
     if ((buffer == NULL) ||
         (packet == NULL))
@@ -132,7 +155,7 @@ bool BL_Protocol_BytesToPacket(
     /*
      * Minimum frame:
      *
-     * [SOF] [LENGTH] [CRC_H] [CRC_L]
+     * [SOF] [LENGTH] [TYPE] [COMMAND] [CRC_H] [CRC_L]
      */
 
     if (buffer_length < BL_PROTOCOL_MIN_FRAME_SIZE)
@@ -147,9 +170,14 @@ bool BL_Protocol_BytesToPacket(
         return false;
     }
 
-    /* Check payload length */
+    /* Check LENGTH */
 
-    if (buffer[1] > BL_PROTOCOL_MAX_DATA_SIZE)
+    if (buffer[1] < BL_PROTOCOL_MIN_LENGTH)
+    {
+        return false;
+    }
+
+    if (buffer[1] > BL_PROTOCOL_MAX_LENGTH)
     {
         return false;
     }
@@ -169,9 +197,24 @@ bool BL_Protocol_BytesToPacket(
     packet->sof    = buffer[0];
     packet->length = buffer[1];
 
-    for (uint8_t i = 0U; i < packet->length; i++)
+    /*
+     * Extract TYPE and COMMAND.
+     */
+
+    packet->type    = buffer[2];
+    packet->command = buffer[3];
+
+    data_length =
+        (uint8_t)(packet->length -
+                  BL_PROTOCOL_FIXED_DATA_SIZE);
+
+    /*
+     * Extract DATA.
+     */
+
+    for (uint8_t i = 0U; i < data_length; i++)
     {
-        packet->data[i] = buffer[2U + i];
+        packet->data[i] = buffer[4U + i];
     }
 
     /*
@@ -179,8 +222,8 @@ bool BL_Protocol_BytesToPacket(
      */
 
     received_crc =
-        ((uint16_t)buffer[2U + packet->length] << 8U) |
-        (uint16_t)buffer[3U + packet->length];
+        ((uint16_t)buffer[4U + data_length] << 8U) |
+        (uint16_t)buffer[5U + data_length];
 
     packet->crc = received_crc;
 
@@ -188,7 +231,8 @@ bool BL_Protocol_BytesToPacket(
      * Verify CRC.
      */
 
-    calculated_crc = BL_Protocol_ComputeCRC(packet);
+    calculated_crc =
+        BL_Protocol_ComputeCRC(packet);
 
     if (received_crc != calculated_crc)
     {
@@ -213,12 +257,48 @@ bool BL_Protocol_IsCommand(
         return false;
     }
 
-    if (packet->length == 0U)
+    if (packet->type != BL_PACKET_TYPE_COMMAND)
     {
         return false;
     }
 
-    return (packet->data[0] == (uint8_t)command);
+    if (packet->length < BL_PROTOCOL_MIN_LENGTH)
+    {
+        return false;
+    }
+
+    return (packet->command == (uint8_t)command);
+}
+
+
+/* ============================================================================
+ * Extract Command
+ * ========================================================================== */
+
+bool BL_Protocol_ExtractCommand(
+    const BL_Protocol_Packet_t *packet,
+    BL_Command_t               *command
+)
+{
+    if ((packet == NULL) ||
+        (command == NULL))
+    {
+        return false;
+    }
+
+    if (packet->type != BL_PACKET_TYPE_COMMAND)
+    {
+        return false;
+    }
+
+    if (packet->length < BL_PROTOCOL_MIN_LENGTH)
+    {
+        return false;
+    }
+
+    *command = (BL_Command_t)packet->command;
+
+    return true;
 }
 
 
@@ -236,12 +316,22 @@ void BL_Protocol_CreateCommandPacket(
         return;
     }
 
-    packet->sof    = BL_PROTOCOL_SOF;
-    packet->length = 1U;
+    packet->sof     = BL_PROTOCOL_SOF;
+    packet->type    = BL_PACKET_TYPE_COMMAND;
+    packet->command = (uint8_t)command;
 
-    packet->data[0] = (uint8_t)command;
+    /*
+     * LENGTH:
+     *
+     * TYPE + COMMAND
+     * = 1 + 1
+     * = 2
+     */
 
-    packet->crc = BL_Protocol_ComputeCRC(packet);
+    packet->length = BL_PROTOCOL_FIXED_DATA_SIZE;
+
+    packet->crc =
+        BL_Protocol_ComputeCRC(packet);
 }
 
 
@@ -270,13 +360,69 @@ void BL_Protocol_CreateDataPacket(
         return;
     }
 
-    packet->sof    = BL_PROTOCOL_SOF;
-    packet->length = length;
+    packet->sof     = BL_PROTOCOL_SOF;
+    packet->type    = BL_PACKET_TYPE_DATA;
+    packet->command = BL_CMD_NONE;
+
+    /*
+     * LENGTH:
+     *
+     * TYPE + COMMAND + DATA
+     * = 2 + DATA length
+     */
+
+    packet->length =
+        (uint8_t)(BL_PROTOCOL_FIXED_DATA_SIZE + length);
 
     for (uint8_t i = 0U; i < length; i++)
     {
         packet->data[i] = data[i];
     }
 
-    packet->crc = BL_Protocol_ComputeCRC(packet);
+    packet->crc =
+        BL_Protocol_ComputeCRC(packet);
+}
+
+
+/* ============================================================================
+ * Extract Data
+ * ========================================================================== */
+
+bool BL_Protocol_ExtractData(
+    const BL_Protocol_Packet_t *packet,
+    uint8_t                    *data,
+    uint8_t                    *length
+)
+{
+    uint8_t data_length;
+
+    if ((packet == NULL) ||
+        (data == NULL) ||
+        (length == NULL))
+    {
+        return false;
+    }
+
+    if (packet->type != BL_PACKET_TYPE_DATA)
+    {
+        return false;
+    }
+
+    if (packet->length < BL_PROTOCOL_MIN_LENGTH)
+    {
+        return false;
+    }
+
+    data_length =
+        (uint8_t)(packet->length -
+                  BL_PROTOCOL_FIXED_DATA_SIZE);
+
+    for (uint8_t i = 0U; i < data_length; i++)
+    {
+        data[i] = packet->data[i];
+    }
+
+    *length = data_length;
+
+    return true;
 }

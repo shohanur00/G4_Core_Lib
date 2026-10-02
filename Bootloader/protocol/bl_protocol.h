@@ -12,36 +12,72 @@
  * ========================================================================== */
 
 #define BL_PROTOCOL_SOF            (0xA5U)
+
 #define BL_PROTOCOL_MAX_DATA_SIZE  (16U)
+#define BL_PROTOCOL_MAX_FRAME_SIZE (22U)
 
 
 /* ============================================================================
  * Packet Size and Length
  *
- * LENGTH represents DATA size only.
+ * LENGTH represents:
+ *
+ *     TYPE + COMMAND + DATA
  *
  * Wire Format:
  *
- * +------+--------+------------------+----------+
- * | SOF  | LENGTH | DATA             | CRC-16   |
- * | 1 B  | 1 B    | 0..16 B          | 2 B      |
- * +------+--------+------------------+----------+
+ * +------+--------+------+---------+------------+----------+
+ * | SOF  | LENGTH | TYPE | COMMAND | DATA       | CRC-16   |
+ * | 1 B  | 1 B    | 1 B  | 1 B     | 0..16 B    | 2 B      |
+ * +------+--------+------+---------+------------+----------+
+ *
+ * LENGTH = TYPE + COMMAND + DATA
+ *        = 2 + DATA_SIZE
  *
  * Total Frame Size = 1 + 1 + LENGTH + 2
  *                  = 4 + LENGTH
+ *
+ * Minimum Frame Size = 6 bytes
+ * Maximum Frame Size = 22 bytes
  * ========================================================================== */
 
-#define BL_PROTOCOL_HEADER_SIZE     (2U)
-#define BL_PROTOCOL_CRC_SIZE        (2U)
+#define BL_PROTOCOL_HEADER_SIZE       (2U)
 
-#define BL_PROTOCOL_OVERHEAD_SIZE   \
+#define BL_PROTOCOL_TYPE_SIZE         (1U)
+
+#define BL_PROTOCOL_COMMAND_SIZE      (1U)
+
+#define BL_PROTOCOL_CRC_SIZE          (2U)
+
+#define BL_PROTOCOL_FIXED_DATA_SIZE   \
+    (BL_PROTOCOL_TYPE_SIZE + BL_PROTOCOL_COMMAND_SIZE)
+
+#define BL_PROTOCOL_OVERHEAD_SIZE     \
     (BL_PROTOCOL_HEADER_SIZE + BL_PROTOCOL_CRC_SIZE)
 
-#define BL_PROTOCOL_MIN_FRAME_SIZE  \
-    (BL_PROTOCOL_OVERHEAD_SIZE)
+#define BL_PROTOCOL_MIN_LENGTH        \
+    (BL_PROTOCOL_FIXED_DATA_SIZE)
 
-#define BL_PROTOCOL_MAX_FRAME_SIZE  \
-    (BL_PROTOCOL_OVERHEAD_SIZE + BL_PROTOCOL_MAX_DATA_SIZE)
+#define BL_PROTOCOL_MAX_LENGTH        \
+    (BL_PROTOCOL_FIXED_DATA_SIZE + BL_PROTOCOL_MAX_DATA_SIZE)
+
+#define BL_PROTOCOL_MIN_FRAME_SIZE    \
+    (BL_PROTOCOL_OVERHEAD_SIZE + BL_PROTOCOL_MIN_LENGTH)
+
+#define BL_PROTOCOL_MAX_FRAME_SIZE    \
+    (BL_PROTOCOL_OVERHEAD_SIZE + BL_PROTOCOL_MAX_LENGTH)
+
+
+/* ============================================================================
+ * Packet Types
+ * ========================================================================== */
+
+typedef enum
+{
+    BL_PACKET_TYPE_COMMAND = 0x01U,
+    BL_PACKET_TYPE_DATA    = 0x02U
+
+} BL_PacketType_t;
 
 
 /* ============================================================================
@@ -50,24 +86,26 @@
 
 typedef enum
 {
-    BL_CMD_SYNC_OBSERVED      = 0x20U,
+    BL_CMD_NONE              = 0x00U,
 
-    BL_CMD_FW_UPDATE_REQ      = 0x31U,
-    BL_CMD_FW_UPDATE_RES      = 0x37U,
+    BL_CMD_SYNC_OBSERVED     = 0x20U,
 
-    BL_CMD_DEVICE_ID_REQ      = 0x3CU,
-    BL_CMD_DEVICE_ID_RES      = 0x3FU,
+    BL_CMD_FW_UPDATE_REQ     = 0x31U,
+    BL_CMD_FW_UPDATE_RES     = 0x37U,
 
-    BL_CMD_FW_LENGTH_REQ      = 0x42U,
-    BL_CMD_FW_LENGTH_RES      = 0x45U,
+    BL_CMD_DEVICE_ID_REQ     = 0x3CU,
+    BL_CMD_DEVICE_ID_RES     = 0x3FU,
 
-    BL_CMD_READY_FOR_DATA     = 0x48U,
+    BL_CMD_FW_LENGTH_REQ     = 0x42U,
+    BL_CMD_FW_LENGTH_RES     = 0x45U,
 
-    BL_CMD_UPDATE_SUCCESSFUL  = 0x54U,
+    BL_CMD_READY_FOR_DATA    = 0x48U,
 
-    BL_CMD_ACK                = 0x15U,
-    BL_CMD_NACK               = 0x59U,
-    BL_CMD_RETX               = 0x19U
+    BL_CMD_UPDATE_SUCCESSFUL = 0x54U,
+
+    BL_CMD_ACK               = 0x15U,
+    BL_CMD_NACK              = 0x59U,
+    BL_CMD_RETX              = 0x19U
 
 } BL_Command_t;
 
@@ -80,7 +118,12 @@ typedef struct
 {
     uint8_t  sof;
     uint8_t  length;
+
+    uint8_t  type;
+    uint8_t  command;
+
     uint8_t  data[BL_PROTOCOL_MAX_DATA_SIZE];
+
     uint16_t crc;
 
 } BL_Protocol_Packet_t;
@@ -90,6 +133,16 @@ typedef struct
  * Protocol API
  * ========================================================================== */
 
+/**
+ * @brief Convert a logical packet into wire-format bytes.
+ *
+ * @param packet       Packet to serialize.
+ * @param buffer       Destination buffer.
+ * @param buffer_size  Size of destination buffer.
+ * @param length       Generated frame length.
+ *
+ * @return true if conversion succeeds, otherwise false.
+ */
 bool BL_Protocol_PacketToBytes(
     const BL_Protocol_Packet_t *packet,
     uint8_t                    *buffer,
@@ -97,28 +150,110 @@ bool BL_Protocol_PacketToBytes(
     uint16_t                   *length
 );
 
+
+/**
+ * @brief Parse and validate a wire-format packet.
+ *
+ * Performs:
+ *     - SOF validation
+ *     - LENGTH validation
+ *     - Frame-size validation
+ *     - CRC-16 validation
+ *
+ * @param buffer         Received frame bytes.
+ * @param buffer_length  Number of received bytes.
+ * @param packet         Output packet.
+ *
+ * @return true if the packet is valid, otherwise false.
+ */
 bool BL_Protocol_BytesToPacket(
     const uint8_t        *buffer,
     uint16_t              buffer_length,
     BL_Protocol_Packet_t *packet
 );
 
+
+/**
+ * @brief Check whether a packet contains a specific command.
+ *
+ * @param packet   Packet to check.
+ * @param command  Command to compare.
+ *
+ * @return true if the packet is a command packet containing
+ *         the specified command.
+ */
 bool BL_Protocol_IsCommand(
     const BL_Protocol_Packet_t *packet,
     BL_Command_t                command
 );
 
+
+/**
+ * @brief Extract the command from a command packet.
+ *
+ * @param packet   Command packet.
+ * @param command  Output command.
+ *
+ * @return true if a valid command is extracted, otherwise false.
+ */
+bool BL_Protocol_ExtractCommand(
+    const BL_Protocol_Packet_t *packet,
+    BL_Command_t               *command
+);
+
+
+/**
+ * @brief Create a command packet.
+ *
+ * Creates a packet with:
+ *
+ *     TYPE    = BL_PACKET_TYPE_COMMAND
+ *     COMMAND = specified command
+ *     DATA    = empty
+ *
+ * @param packet   Output packet.
+ * @param command  Command to encode.
+ */
 void BL_Protocol_CreateCommandPacket(
     BL_Protocol_Packet_t *packet,
     BL_Command_t          command
 );
 
+
+/**
+ * @brief Create a data packet.
+ *
+ * Creates a packet with:
+ *
+ *     TYPE    = BL_PACKET_TYPE_DATA
+ *     COMMAND = BL_CMD_NONE
+ *     DATA    = specified payload
+ *
+ * @param packet   Output packet.
+ * @param data     Payload data.
+ * @param length   Payload length.
+ */
 void BL_Protocol_CreateDataPacket(
     BL_Protocol_Packet_t *packet,
     const uint8_t        *data,
     uint8_t               length
 );
 
+/*
+ * @brief Extract data from a data packet.
+ *
+ * @param packet   Data packet.
+ * @param data     Output data buffer.
+ * @param length   Output data length.
+ *
+ * @return true if valid data is extracted, otherwise false.
+ */
+
+bool BL_Protocol_ExtractData(
+    const BL_Protocol_Packet_t *packet,
+    uint8_t                    *data,
+    uint8_t                    *length
+);
+
 
 #endif /* BL_PROTOCOL_H */
-
