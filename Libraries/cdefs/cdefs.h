@@ -40,8 +40,12 @@
 /* ============================================================================
  * UART Utilities
  * ========================================================================== */
+#define UART_PARITY_NONE  0U
+#define UART_PARITY_EVEN  1U
+#define UART_PARITY_ODD   2U
 
-
+#define UART_STOPBITS_1   0U
+#define UART_STOPBITS_2   1U
  
 
 #endif /* COMMON_H */

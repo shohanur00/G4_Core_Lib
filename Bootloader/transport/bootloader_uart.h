@@ -2,6 +2,7 @@
 #define BOOTLOADER_UART_H
 
 #include <stdint.h>
+#include <stdbool.h> 
 
 /* ============================================================================
  * Bootloader UART
@@ -23,6 +24,12 @@ void Bootloader_UART_Init(void);
 void Bootloader_UART_Write(
     const uint8_t *data,
     uint32_t       length
+);
+
+
+
+bool Bootloader_UART_ReadByte(
+    uint8_t *data
 );
 
 #endif /* BOOTLOADER_UART_H */

@@ -1,9 +1,155 @@
 #include "uart_driver.h"
 #include "uart/uart_hal.h"
+#include "cdefs/cdefs.h"
+#include "containers/ringbuffer/ring_buffer.h"
+
+
+
+/* ============================================================================
+ * UART Ring Buffer Configuration
+ * ========================================================================== */
+
+#define UART_INSTANCE_COUNT     6U
+#define UART_RX_BUFFER_SIZE     256U
+
+#define UART_INVALID_INDEX      0xFFU
+
+
+/* ============================================================================
+ * UART RX Ring Buffers
+ * ========================================================================== */ 
+
+static RingBuffer_t uart_rx_ring_buffer[UART_INSTANCE_COUNT];
+
+static uint8_t uart_rx_storage[UART_INSTANCE_COUNT][UART_RX_BUFFER_SIZE];
+
+
+/* ============================================================================
+ * Private Functions
+ * ========================================================================== */
+
+
+/**
+ * @brief Get UART array index from UART instance number.
+ *
+ * @param instance UART instance number.
+ *
+ * @return Zero-based UART index.
+ *         UART_INVALID_INDEX if invalid.
+ */
+static uint8_t UART_Driver_GetIndex(
+    uint8_t instance
+)
+{
+    if ((instance == 0U) ||
+        (instance > UART_INSTANCE_COUNT))
+    {
+        return UART_INVALID_INDEX;
+    }
+
+    return (uint8_t)(instance - 1U);
+}
+
+
+/**
+ * @brief Get UART peripheral instance.
+ *
+ * @param instance UART instance number.
+ *
+ * @return Pointer to UART peripheral.
+ *         NULL if instance is not available.
+ */
+static USART_TypeDef *UART_Driver_GetInstance(
+    uint8_t instance
+)
+{
+    switch (instance)
+    {
+        case 1U:
+
+#if defined(USART1)
+
+            return USART1;
+
+#endif
+
+        case 2U:
+
+#if defined(USART2)
+
+            return USART2;
+
+#endif
+
+        case 3U:
+
+#if defined(USART3)
+
+            return USART3;
+
+#endif
+
+        case 4U:
+
+#if defined(UART4)
+
+            return UART4;
+
+#endif
+
+        case 5U:
+
+#if defined(UART5)
+
+            return UART5;
+
+#endif
+
+        case 6U:
+
+#if defined(LPUART1)
+
+            return LPUART1;
+
+#endif
+
+        default:
+            return NULL;
+    }
+
+    return NULL;
+}
+
 
 /* ============================================================================
  * UART Initialization
  * ========================================================================== */
+
+/**
+ * @brief Initialize RX ring buffer for a UART instance.
+ *
+ * @param instance UART instance number.
+ */
+static void UART_Driver_RxBuffer_Init(
+    uint8_t instance
+)
+{
+    uint8_t index;
+
+    index = UART_Driver_GetIndex(instance);
+
+    if (index == UART_INVALID_INDEX)
+    {
+        return;
+    }
+
+    RingBuffer_Setup(
+        &uart_rx_ring_buffer[index],
+        uart_rx_storage[index],
+        UART_RX_BUFFER_SIZE
+    );
+}
+
 
 void UART_Driver_Init(
     uint8_t         instance,
@@ -14,104 +160,32 @@ void UART_Driver_Init(
     UART_StopBits_t stop_bits
 )
 {
-    switch (instance)
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
     {
-        case 1U:
+        return;
+    }
 
-            UART_HAL_Init(
-                USART1,
-                tx_enable,
-                rx_enable,
-                baudrate,
-                parity,
-                stop_bits
-            );
+    UART_HAL_Init(
+        uart,
+        tx_enable,
+        rx_enable,
+        baudrate,
+        parity,
+        stop_bits
+    );
 
-            break;
-
-
-        case 2U:
-
-            UART_HAL_Init(
-                USART2,
-                tx_enable,
-                rx_enable,
-                baudrate,
-                parity,
-                stop_bits
-            );
-
-            break;
-
-
-        case 3U:
-
-            UART_HAL_Init(
-                USART3,
-                tx_enable,
-                rx_enable,
-                baudrate,
-                parity,
-                stop_bits
-            );
-
-            break;
-
-
-        case 4U:
-
-        #if defined(UART4)
-
-            UART_HAL_Init(
-                UART4,
-                tx_enable,
-                rx_enable,
-                baudrate,
-                parity,
-                stop_bits
-            );
-            
-        #endif
-
-            break;
-
-
-        case 5U:
-
-        #if defined(UART5)
-
-            UART_HAL_Init(
-                UART5,
-                tx_enable,
-                rx_enable,
-                baudrate,
-                parity,
-                stop_bits
-            );
-            
-        #endif
-
-            break;
-
-
-        case 6U:
-
-            UART_HAL_Init(
-                LPUART1,
-                tx_enable,
-                rx_enable,
-                baudrate,
-                parity,
-                stop_bits
-            );
-
-            break;
-
-
-        default:
-            break;
+    if (rx_enable == UART_ENABLE)
+    {
+        UART_Driver_RxBuffer_Init(instance);
     }
 }
+
+
+
 
 
 /* ============================================================================
@@ -122,41 +196,37 @@ void UART_Driver_Rx_Interrupt_Enable(
     uint8_t instance
 )
 {
-    switch (instance)
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
     {
-        case 1U:
-            UART_HAL_Rx_Interrupt_Enable(USART1);
-            break;
-
-        case 2U:
-            UART_HAL_Rx_Interrupt_Enable(USART2);
-            break;
-
-        case 3U:
-            UART_HAL_Rx_Interrupt_Enable(USART3);
-            break;
-
-        case 4U:
-            #if defined(UART4)
-            UART_HAL_Rx_Interrupt_Enable(UART4);
-            #endif
-            break;
-
-        case 5U:
-           #if defined(UART5)
-
-            UART_HAL_Rx_Interrupt_Enable(UART5);
-
-            #endif 
-            break;
-
-        case 6U:
-            UART_HAL_Rx_Interrupt_Enable(LPUART1);
-            break;
-
-        default:
-            break;
+        return;
     }
+
+    UART_HAL_Rx_Interrupt_Enable(uart);
+}
+
+
+/* ============================================================================
+ * UART RX Interrupt Disable
+ * ========================================================================== */
+
+void UART_Driver_Rx_Interrupt_Disable(
+    uint8_t instance
+)
+{
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
+    {
+        return;
+    }
+
+    UART_HAL_Rx_Interrupt_Disable(uart);
 }
 
 
@@ -168,45 +238,155 @@ void UART_Driver_Tx_Interrupt_Enable(
     uint8_t instance
 )
 {
-    switch (instance)
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
     {
-        case 1U:
-            UART_HAL_Tx_Interrupt_Enable(USART1);
-            break;
-
-        case 2U:
-            UART_HAL_Tx_Interrupt_Enable(USART2);
-            break;
-
-        case 3U:
-            UART_HAL_Tx_Interrupt_Enable(USART3);
-            break;
-
-        case 4U:
-            
-        #if defined(UART4)
-            UART_HAL_Tx_Interrupt_Enable(UART4);
-        #endif
-
-            break;
-
-        case 5U:
-
-        #if defined(UART5)
-
-            UART_HAL_Tx_Interrupt_Enable(UART5);
-            
-        # endif
-
-            break;
-
-        case 6U:
-            UART_HAL_Tx_Interrupt_Enable(LPUART1);
-            break;
-
-        default:
-            break;
+        return;
     }
+
+    UART_HAL_Tx_Interrupt_Enable(uart);
+}
+
+
+/* ============================================================================
+ * UART TX Interrupt Disable
+ * ========================================================================== */
+
+void UART_Driver_Tx_Interrupt_Disable(
+    uint8_t instance
+)
+{
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
+    {
+        return;
+    }
+
+    UART_HAL_Tx_Interrupt_Disable(uart);
+}
+
+
+/* ============================================================================
+ * UART RX Status
+ * ========================================================================== */
+
+uint8_t UART_Driver_Rx_Ready(
+    uint8_t instance
+)
+{
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
+    {
+        return 0U;
+    }
+
+    return UART_HAL_Rx_Ready(uart);
+}
+
+/* ============================================================================
+ * UART Read Byte
+ * ========================================================================== */
+
+bool UART_Driver_ReadByte(
+    uint8_t instance,
+    uint8_t *data
+)
+{
+    uint8_t index;
+
+    if (data == NULL)
+    {
+        return false;
+    }
+
+    if ((instance == 0U) ||
+        (instance > UART_INSTANCE_COUNT))
+    {
+        return false;
+    }
+
+    index = (uint8_t)(instance - 1U);
+
+    return RingBuffer_Read(
+        &uart_rx_ring_buffer[index],
+        data
+    );
+}
+
+
+/* ============================================================================
+ * UART TX Status
+ * ========================================================================== */
+
+uint8_t UART_Driver_Tx_Ready(
+    uint8_t instance
+)
+{
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
+    {
+        return 0U;
+    }
+
+    return UART_HAL_Tx_Ready(uart);
+}
+
+
+/* ============================================================================
+ * UART TX Complete
+ * ========================================================================== */
+
+uint8_t UART_Driver_Tx_Complete(
+    uint8_t instance
+)
+{
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
+    {
+        return 0U;
+    }
+
+    return UART_HAL_Tx_Complete(uart);
+}
+
+
+/* ============================================================================
+ * UART Write Character
+ * ========================================================================== */
+
+void UART_Driver_WriteChar(
+    uint8_t instance,
+    char    ch
+)
+{
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
+    {
+        return;
+    }
+
+    UART_HAL_WriteChar(
+        uart,
+        ch
+    );
 }
 
 
@@ -220,66 +400,20 @@ void UART_Driver_Write(
     uint32_t       length
 )
 {
-    switch (instance)
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
     {
-        case 1U:
-            UART_HAL_Write(
-                USART1,
-                data,
-                length
-            );
-            break;
-
-        case 2U:
-            UART_HAL_Write(
-                USART2,
-                data,
-                length
-            );
-            break;
-
-        case 3U:
-            UART_HAL_Write(
-                USART3,
-                data,
-                length
-            );
-            break;
-
-        case 4U:
-
-        #if defined(UART4)
-
-            UART_HAL_Write(
-                UART4,
-                data,
-                length
-            );
-
-        #endif
-            break;
-
-        case 5U:
-        #if defined(UART5)
-            UART_HAL_Write(
-                UART5,
-                data,
-                length
-            );
-        #endif
-            break;
-
-        case 6U:
-            UART_HAL_Write(
-                LPUART1,
-                data,
-                length
-            );
-            break;
-
-        default:
-            break;
+        return;
     }
+
+    UART_HAL_Write(
+        uart,
+        data,
+        length
+    );
 }
 
 
@@ -293,68 +427,20 @@ void UART_Driver_DMA_Tx_Init(
     uint32_t dma_request
 )
 {
-    switch (instance)
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
     {
-        case 1U:
-            UART_HAL_DMA_Tx_Init(
-                USART1,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        case 2U:
-            UART_HAL_DMA_Tx_Init(
-                USART2,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        case 3U:
-            UART_HAL_DMA_Tx_Init(
-                USART3,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        case 4U:
-
-        #if defined(UART4)
-
-            UART_HAL_DMA_Tx_Init(
-                UART4,
-                dma_channel,
-                dma_request
-            );
-
-        #endif
-            break;
-
-        case 5U:
-
-        #if defined(UART5)
-
-            UART_HAL_DMA_Tx_Init(
-                UART5,
-                dma_channel,
-                dma_request
-            );
-        #endif
-            break;
-
-        case 6U:
-            UART_HAL_DMA_Tx_Init(
-                LPUART1,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        default:
-            break;
+        return;
     }
+
+    UART_HAL_DMA_Tx_Init(
+        uart,
+        dma_channel,
+        dma_request
+    );
 }
 
 
@@ -368,72 +454,21 @@ void UART_Driver_DMA_Rx_Init(
     uint32_t dma_request
 )
 {
-    switch (instance)
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
     {
-        case 1U:
-            UART_HAL_DMA_Rx_Init(
-                USART1,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        case 2U:
-            UART_HAL_DMA_Rx_Init(
-                USART2,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        case 3U:
-            UART_HAL_DMA_Rx_Init(
-                USART3,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        case 4U:
-            
-        #if defined(UART4)
-
-            UART_HAL_DMA_Rx_Init(
-                UART4,
-                dma_channel,
-                dma_request
-            );
-        
-        #endif
-
-            break;
-
-        case 5U:
-
-        #if defined(UART5)
-            UART_HAL_DMA_Rx_Init(
-                UART5,
-                dma_channel,
-                dma_request
-            );
-
-        #endif
-
-            break;
-
-        case 6U:
-            UART_HAL_DMA_Rx_Init(
-                LPUART1,
-                dma_channel,
-                dma_request
-            );
-            break;
-
-        default:
-            break;
+        return;
     }
-}
 
+    UART_HAL_DMA_Rx_Init(
+        uart,
+        dma_channel,
+        dma_request
+    );
+}
 
 
 /* ============================================================================
@@ -446,66 +481,168 @@ void UART_Driver_DMA_Write(
     uint32_t       length
 )
 {
-    switch (instance)
+    USART_TypeDef *uart;
+
+    uart = UART_Driver_GetInstance(instance);
+
+    if (uart == NULL)
     {
-        case 1U:
-            UART_HAL_DMA_Write(
-                USART1,
-                data,
-                length
-            );
-            break;
+        return;
+    }
 
-        case 2U:
-            UART_HAL_DMA_Write(
-                USART2,
-                data,
-                length
-            );
-            break;
+    UART_HAL_DMA_Write(
+        uart,
+        data,
+        length
+    );
+}
 
-        case 3U:
-            UART_HAL_DMA_Write(
-                USART3,
-                data,
-                length
-            );
-            break;
 
-        case 4U:
+/* ============================================================================
+ * UART IRQ Handler
+ * ========================================================================== */
 
-        #if defined(UART4)
 
-            UART_HAL_DMA_Write(
-                UART4,
-                data,
-                length
-            );
+static uint8_t UART_Driver_GetRxBufferIndex(
+    USART_TypeDef *uart
+)
+{
+#if defined(USART1)
+    if (uart == USART1)
+    {
+        return 0U;
+    }
+#endif
 
-        #endif
-            break;
+#if defined(USART2)
+    if (uart == USART2)
+    {
+        return 1U;
+    }
+#endif
 
-        case 5U:
+#if defined(USART3)
+    if (uart == USART3)
+    {
+        return 2U;
+    }
+#endif
 
-        #if defined(UART5)
-            UART_HAL_DMA_Write(
-                UART5,
-                data,
-                length
-            );
-        #endif
+#if defined(UART4)
+    if (uart == UART4)
+    {
+        return 3U;
+    }
+#endif
 
-            break;
+#if defined(UART5)
+    if (uart == UART5)
+    {
+        return 4U;
+    }
+#endif
 
-        case 6U:
-            UART_HAL_DMA_Write(
-                LPUART1,
-                data,
-                length
-            );
-            break;
+#if defined(LPUART1)
+    if (uart == LPUART1)
+    {
+        return 5U;
+    }
+#endif
 
-        default:
-            break;
+    return UART_INVALID_INDEX;
+}
+
+
+void UART_Driver_IRQHandler(
+    USART_TypeDef *uart
+)
+{
+    uint8_t data;
+    uint8_t index;
+
+    if (uart == NULL)
+    {
+        return;
+    }
+
+    index = UART_Driver_GetRxBufferIndex(uart);
+
+    if (index == UART_INVALID_INDEX)
+    {
+        return;
+    }
+
+    if (UART_HAL_Rx_IRQHandler(uart, &data))
+    {
+        (void)RingBuffer_Write(
+            &uart_rx_ring_buffer[index],
+            data
+        );
     }
 }
+
+
+/* ============================================================================
+ * UART Interrupt Service Routines
+ * ========================================================================== */
+
+#if defined(USART1)
+
+void USART1_IRQHandler(void)
+{
+    UART_Driver_IRQHandler(USART1);
+}
+
+#endif
+
+
+#if defined(USART2)
+
+void USART2_IRQHandler(void)
+{
+    UART_Driver_IRQHandler(USART2);
+}
+
+#endif
+
+
+#if defined(USART3)
+
+void USART3_IRQHandler(void)
+{
+    UART_Driver_IRQHandler(USART3);
+}
+
+#endif
+
+
+#if defined(UART4)
+
+void UART4_IRQHandler(void)
+{
+    UART_Driver_IRQHandler(UART4);
+}
+
+#endif
+
+
+#if defined(UART5)
+
+void UART5_IRQHandler(void)
+{
+    UART_Driver_IRQHandler(UART5);
+}
+
+#endif
+
+
+#if defined(LPUART1)
+
+void LPUART1_IRQHandler(void)
+{
+    UART_Driver_IRQHandler(LPUART1);
+}
+
+#endif
+
+

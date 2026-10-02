@@ -3,62 +3,56 @@
 
 #include <stdint.h>
 #include "stm32g431xx.h"
+#include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ============================================================================
- * UART HAL Initialization
+ * UART Initialization
  * ========================================================================== */
 
-/**
- * @brief Initialize UART/USART peripheral.
- *
- * @param uart       UART/USART peripheral instance.
- * @param tx_enable  Enable/disable transmitter.
- * @param rx_enable  Enable/disable receiver.
- * @param baudrate   Communication baud rate.
- * @param parity     Parity configuration.
- * @param stop_bits  Stop-bit configuration.
- *
- * @note GPIO configuration is handled by the GPIO Driver.
- */
 void UART_HAL_Init(
     USART_TypeDef *uart,
-    uint8_t   tx_enable,
-    uint8_t   rx_enable,
-    uint32_t  baudrate,
-    uint8_t   parity,
-    uint8_t   stop_bits
+    uint8_t        tx_enable,
+    uint8_t        rx_enable,
+    uint32_t       baudrate,
+    uint8_t        parity,
+    uint8_t        stop_bits
 );
 
 
 /* ============================================================================
- * UART RX Interrupt Enable
+ * UART Status
  * ========================================================================== */
 
-void UART_HAL_Rx_Interrupt_Enable(
+uint8_t UART_HAL_Rx_Ready(
+    USART_TypeDef *uart
+);
+
+uint8_t UART_HAL_Tx_Ready(
+    USART_TypeDef *uart
+);
+
+uint8_t UART_HAL_Tx_Complete(
     USART_TypeDef *uart
 );
 
 
 /* ============================================================================
- * UART TX Interrupt Enable
+ * UART Data
  * ========================================================================== */
 
-void UART_HAL_Tx_Interrupt_Enable(
+uint8_t UART_HAL_ReadByte(
     USART_TypeDef *uart
 );
 
-/* ============================================================================
- * UART Write
- * ========================================================================== */
+void UART_HAL_WriteChar(
+    USART_TypeDef *uart,
+    char           ch
+);
 
-/**
- * @brief Transmit data through UART.
- *
- * @param uart    UART/USART peripheral instance.
- * @param data    Data buffer.
- * @param length  Number of bytes to transmit.
- */
 void UART_HAL_Write(
     USART_TypeDef *uart,
     const uint8_t *data,
@@ -67,8 +61,41 @@ void UART_HAL_Write(
 
 
 /* ============================================================================
- * UART DMA Write
+ * UART Interrupt
  * ========================================================================== */
+
+void UART_HAL_Rx_Interrupt_Enable(
+    USART_TypeDef *uart
+);
+
+void UART_HAL_Rx_Interrupt_Disable(
+    USART_TypeDef *uart
+);
+
+void UART_HAL_Tx_Interrupt_Enable(
+    USART_TypeDef *uart
+);
+
+void UART_HAL_Tx_Interrupt_Disable(
+    USART_TypeDef *uart
+);
+
+
+/* ============================================================================
+ * UART DMA
+ * ========================================================================== */
+
+void UART_HAL_DMA_Tx_Init(
+    USART_TypeDef *uart,
+    uint8_t        dma_channel,
+    uint32_t       dma_request
+);
+
+void UART_HAL_DMA_Rx_Init(
+    USART_TypeDef *uart,
+    uint8_t        dma_channel,
+    uint32_t       dma_request
+);
 
 void UART_HAL_DMA_Write(
     USART_TypeDef *uart,
@@ -77,39 +104,15 @@ void UART_HAL_DMA_Write(
 );
 
 
-/* ============================================================================
- * UART DMA TX Initialization
- * ========================================================================== */
 
-/**
- * @brief Initialize UART DMA transmission.
- *
- * @param uart         UART/USART peripheral instance.
- * @param dma_channel  DMA channel number.
- * @param dma_request  DMAMUX request selection.
- */
-void UART_HAL_DMA_Tx_Init(
+bool UART_HAL_Rx_IRQHandler(
     USART_TypeDef *uart,
-    uint8_t        dma_channel,
-    uint32_t       dma_request
+    uint8_t       *data
 );
 
 
-/* ============================================================================
- * UART DMA RX Initialization
- * ========================================================================== */
-
-/**
- * @brief Initialize UART DMA reception.
- *
- * @param uart         UART/USART peripheral instance.
- * @param dma_channel  DMA channel number.
- * @param dma_request  DMAMUX request selection.
- */
-void UART_HAL_DMA_Rx_Init(
-    USART_TypeDef *uart,
-    uint8_t        dma_channel,
-    uint32_t       dma_request
-);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UART_HAL_H */

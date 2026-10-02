@@ -90,3 +90,23 @@ void Bootloader_UART_Write(
 
 #endif
 }
+
+
+/* ============================================================================
+ * Bootloader UART Read
+ * ========================================================================== */
+
+bool Bootloader_UART_ReadByte(
+    uint8_t *data
+)
+{
+    if (data == NULL)
+    {
+        return false;
+    }
+
+    return UART_Driver_ReadByte(
+        BOOTLOADER_UART_INSTANCE,
+        data
+    );
+}

@@ -41,8 +41,16 @@ void App_Loop(void)
         LOG_ERROR(LOG_MODULE_SYSTEM,"OVER Temperature!");
         LOG_CRITICAL(LOG_MODULE_SYSTEM,"System Failure!");
         // LOG_UART_Write("Hello", 5);
-        Bootloader_UART_Write("Hello\r\n", 7U);
+        //Bootloader_UART_Write("Hello\r\n", 7U);
         LOG_Disable();
+    }
+
+    uint8_t data;
+
+    if (Bootloader_UART_ReadByte(&data))
+    {
+        Bootloader_UART_Write(&data, 1U); // Echo the received byte back
+        /* One byte received */
     }
     TimeCore_MainLoop(); // Call the main loop function for time-based tasks
     LOG_MainLoop(TimeCore_GetTick());
