@@ -27,7 +27,7 @@
 void Version_LOG(void)
 {
     LOG_INFO(LOG_MODULE_SYSTEM,
-             "Firmware Version: %u.%u.%u",
+             "Firmware Version: %u.%u.%u\n\r",
              FW_VERSION_MAJOR,
              FW_VERSION_MINOR,
              FW_VERSION_BUILD);

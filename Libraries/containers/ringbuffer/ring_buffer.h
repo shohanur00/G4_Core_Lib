@@ -11,7 +11,7 @@
 
 typedef struct
 {
-    uint8_t  *buffer;
+    volatile uint8_t  *buffer;
 
     uint32_t readIndex;
     uint32_t writeIndex;
@@ -36,7 +36,7 @@ typedef struct
  *       One slot is reserved to distinguish full from empty.
  */
 void RingBuffer_Setup(RingBuffer_t *rb,
-                      uint8_t *buffer,
+                      volatile uint8_t *buffer,
                       uint32_t size);
 
 

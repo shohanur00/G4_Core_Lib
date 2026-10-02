@@ -21,7 +21,7 @@
 
 static RingBuffer_t uart_rx_ring_buffer[UART_INSTANCE_COUNT];
 
-static uint8_t uart_rx_storage[UART_INSTANCE_COUNT][UART_RX_BUFFER_SIZE];
+static volatile uint8_t uart_rx_storage[UART_INSTANCE_COUNT][UART_RX_BUFFER_SIZE];
 
 
 /* ============================================================================

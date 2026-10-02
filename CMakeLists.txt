@@ -51,10 +51,12 @@ target_sources(${PROJECT_NAME} PRIVATE
   Bootloader/core/bootloader.c
   Bootloader/image/image.c
   Bootloader/image/image.h
-  Bootloader/protocol/boot_protocol.c
+  Bootloader/protocol/bl_protocol.c
   Bootloader/transport/bootloader_uart.c
   Drivers/uart/uart_driver.c 
   HAL/uart/uart_hal.c
+  Bootloader/tests/bl_protocol_test.c
+  Libraries/crc/crc.c
   
 )
 

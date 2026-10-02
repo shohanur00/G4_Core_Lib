@@ -7,7 +7,7 @@
  *==========================================================*/
 
 void RingBuffer_Setup(RingBuffer_t *rb,
-                      uint8_t *buffer,
+                      volatile uint8_t *buffer,
                       uint32_t size)
 {
     rb->buffer    = buffer;
@@ -222,7 +222,7 @@ uint32_t RingBuffer_DiscardBuffer(RingBuffer_t *rb,
  * Zero-Copy / Direct Access
  *==========================================================*/
 
-const uint8_t *RingBuffer_PeekBuffer(const RingBuffer_t *rb,
+const  uint8_t *RingBuffer_PeekBuffer(const RingBuffer_t *rb,
                                      uint32_t *length)
 {
     uint32_t readIndex;
@@ -261,7 +261,7 @@ const uint8_t *RingBuffer_PeekBuffer(const RingBuffer_t *rb,
 
     *length = contiguousLength;
 
-    return &rb->buffer[readIndex];
+    return (const uint8_t *)&rb->buffer[readIndex];
 }
 
 

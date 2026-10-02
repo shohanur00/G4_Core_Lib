@@ -21,7 +21,7 @@
  *   0U - DISABLE
  * ========================================================================== */
 
-#define LOG_USE_UART                 DISABLE
+#define LOG_USE_UART                 ENABLE
 #define LOG_USE_FLASH                DISABLE
 #define LOG_USE_USB                  DISABLE
 #define LOG_USE_RTT                  DISABLE
@@ -60,7 +60,7 @@
  *
  * ========================================================================== */
 
-#define BOOTLOADER_USE_UART                 ENABLE
+#define BOOTLOADER_USE_UART                 DISABLE
 #define BOOTLOADER_USE_USB                  DISABLE
 #define BOOTLOADER_USE_OTA                  DISABLE
 

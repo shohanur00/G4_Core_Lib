@@ -100,7 +100,7 @@ extern "C" {
 typedef enum
 {
     LOG_MODULE_SYSTEM = 0U,
-
+    LOG_MODULE_BOOTLOADER,
     /* Add application-specific modules above this entry. */
     /* Example:
      * LOG_MODULE_MOTOR,
