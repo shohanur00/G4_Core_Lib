@@ -9,6 +9,7 @@
 #include "version.h"
 #include "transport/uart/bootloader_uart.h"
 #include "tests/bl_protocol_test.h"
+#include "tests/bl_flash_test.h"
 
 
 uint8_t LED_timer; // Define the GPIO pin for the LED
@@ -43,7 +44,8 @@ void App_Loop(void)
         // LOG_CRITICAL(LOG_MODULE_SYSTEM,"System Failure!");
         // LOG_UART_Write("Hello", 5);
         //Bootloader_UART_Write("Hello\r\n", 7U);
-        BL_Protocol_Test();
+        // BL_Protocol_Test();
+        BL_Flash_Test();
         LOG_Disable();
 
         

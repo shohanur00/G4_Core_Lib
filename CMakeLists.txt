@@ -60,6 +60,7 @@ target_sources(${PROJECT_NAME} PRIVATE
   Libraries/crc/crc.c
   Bootloader/transport/bl_transport.c
   Bootloader/flash/bl_flash.c
+  Bootloader/tests/bl_flash_test.c
    
 )
 

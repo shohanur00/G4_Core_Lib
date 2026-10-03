@@ -1,19 +1,42 @@
 #include "bl_flash.h"
-
 #include "stm32g431xx.h"
-#include "cdefs/cdefs.h"
+
+#include <stddef.h>
 
 
 /* ============================================================================
- * Flash Unlock Keys
+ * Flash Constants
  * ========================================================================== */
 
-#define BL_FLASH_KEY1    (0x45670123UL)
-#define BL_FLASH_KEY2    (0xCDEF89ABUL)
+#define BL_FLASH_PAGE_SIZE          (2048UL)
+#define BL_FLASH_DOUBLE_WORD_SIZE   (8UL)
+
+#define BL_FLASH_KEY1               (0x45670123UL)
+#define BL_FLASH_KEY2               (0xCDEF89ABUL)
 
 
 /* ============================================================================
- * Internal Helpers
+ * Flash Status Flags
+ * ========================================================================== */
+
+#define BL_FLASH_ERROR_FLAGS \
+    (FLASH_SR_OPERR   | \
+     FLASH_SR_PROGERR | \
+     FLASH_SR_WRPERR  | \
+     FLASH_SR_PGAERR  | \
+     FLASH_SR_SIZERR  | \
+     FLASH_SR_PGSERR  | \
+     FLASH_SR_MISERR  | \
+     FLASH_SR_FASTERR | \
+     FLASH_SR_RDERR   | \
+     FLASH_SR_OPTVERR)
+
+#define BL_FLASH_STATUS_FLAGS \
+    (FLASH_SR_EOP | BL_FLASH_ERROR_FLAGS)
+
+
+/* ============================================================================
+ * Private Functions
  * ========================================================================== */
 
 static bool BL_Flash_IsAddressValid(
@@ -54,6 +77,7 @@ static bool BL_Flash_IsRangeValid(
 
     end_address = address + length - 1U;
 
+    /* Overflow check */
     if (end_address < address)
     {
         return false;
@@ -69,22 +93,54 @@ static bool BL_Flash_IsRangeValid(
 }
 
 
+static void BL_Flash_WaitWhileBusy(void)
+{
+    while ((FLASH->SR & FLASH_SR_BSY) != 0U)
+    {
+        /* Wait */
+    }
+}
+
+
+static void BL_Flash_ClearStatusFlags(void)
+{
+    FLASH->SR = BL_FLASH_STATUS_FLAGS;
+}
+
+
+static void BL_Flash_Unlock(void)
+{
+    if ((FLASH->CR & FLASH_CR_LOCK) != 0U)
+    {
+        FLASH->KEYR = BL_FLASH_KEY1;
+        FLASH->KEYR = BL_FLASH_KEY2;
+    }
+}
+
+
+static void BL_Flash_Lock(void)
+{
+    FLASH->CR |= FLASH_CR_LOCK;
+}
+
+
+static bool BL_Flash_HasError(void)
+{
+    return ((FLASH->SR & BL_FLASH_ERROR_FLAGS) != 0U);
+}
+
+
 /* ============================================================================
- * Flash Initialization
+ * Initialization
  * ========================================================================== */
 
 bool BL_Flash_Init(void)
 {
-    /*
-     * Flash peripheral does not require a clock enable.
-     *
-     * Make sure Flash is locked before normal operation.
-     */
+    BL_Flash_Unlock();
 
-    if ((FLASH->CR & FLASH_CR_LOCK) == 0U)
+    if ((FLASH->CR & FLASH_CR_LOCK) != 0U)
     {
-        FLASH->KEYR = BL_FLASH_KEY1;
-        FLASH->KEYR = BL_FLASH_KEY2;
+        return false;
     }
 
     return true;
@@ -104,103 +160,81 @@ bool BL_Flash_Erase(
     uint32_t end_page;
     uint32_t page;
 
-    if (!BL_Flash_IsRangeValid(
-            address,
-            length))
+    if (!BL_Flash_IsRangeValid(address, length))
     {
         return false;
     }
 
     /*
-     * STM32G4 Flash page size = 2 KB
+     * Convert address to flash page number.
      */
-
     start_page =
         (address - BL_FLASH_START_ADDRESS) /
-        2048U;
+        BL_FLASH_PAGE_SIZE;
 
     end_page =
         ((address + length - 1U) -
          BL_FLASH_START_ADDRESS) /
-        2048U;
+        BL_FLASH_PAGE_SIZE;
 
-
-    /*
-     * Unlock Flash
-     */
+    BL_Flash_Unlock();
 
     if ((FLASH->CR & FLASH_CR_LOCK) != 0U)
     {
-        FLASH->KEYR = BL_FLASH_KEY1;
-        FLASH->KEYR = BL_FLASH_KEY2;
+        return false;
     }
-
-
-    /*
-     * Clear previous status flags
-     */
-
-    FLASH->SR = FLASH_SR_ALL_ERRORS;
-
 
     for (page = start_page;
          page <= end_page;
          page++)
     {
         /*
-         * Wait until Flash is not busy
+         * Wait until previous operation is finished.
          */
-
-        while ((FLASH->SR & FLASH_SR_BSY) != 0U)
-        {
-        }
-
+        BL_Flash_WaitWhileBusy();
 
         /*
-         * Page erase
+         * Clear previous status flags.
          */
+        BL_Flash_ClearStatusFlags();
 
+        /*
+         * Select page.
+         */
         FLASH->CR &= ~FLASH_CR_PNB;
 
         FLASH->CR |=
             ((page << FLASH_CR_PNB_Pos) &
              FLASH_CR_PNB);
 
+        /*
+         * Page erase.
+         */
         FLASH->CR |= FLASH_CR_PER;
+
         FLASH->CR |= FLASH_CR_STRT;
 
+        /*
+         * Wait for erase completion.
+         */
+        BL_Flash_WaitWhileBusy();
 
         /*
-         * Wait for erase completion
+         * Disable page erase mode.
          */
-
-        while ((FLASH->SR & FLASH_SR_BSY) != 0U)
-        {
-        }
-
+        FLASH->CR &= ~FLASH_CR_PER;
 
         /*
-         * Check erase error
+         * Check erase result.
          */
-
-        if ((FLASH->SR & FLASH_SR_ALL_ERRORS) != 0U)
+        if (BL_Flash_HasError())
         {
-            FLASH->CR &= ~FLASH_CR_PER;
-
-            FLASH->CR |= FLASH_CR_LOCK;
-
+            BL_Flash_Lock();
             return false;
         }
-
-        FLASH->CR &= ~FLASH_CR_PER;
     }
 
-
-    /*
-     * Lock Flash again
-     */
-
-    FLASH->CR |= FLASH_CR_LOCK;
+    BL_Flash_Lock();
 
     return true;
 }
@@ -219,82 +253,57 @@ bool BL_Flash_Write(
     uint32_t index;
     uint64_t double_word;
 
-
-    if ((data == NULL) ||
-        (length == 0U))
+    if ((data == NULL) || (length == 0U))
     {
         return false;
     }
 
-
-    if (!BL_Flash_IsRangeValid(
-            address,
-            length))
+    if (!BL_Flash_IsRangeValid(address, length))
     {
         return false;
     }
-
 
     /*
-     * STM32G4 programs Flash using 64-bit double words.
-     *
-     * Address must therefore be 8-byte aligned.
+     * STM32G4 double-word programming requires
+     * 64-bit aligned address and 8-byte data.
      */
-
-    if ((address & 0x07U) != 0U)
+    if ((address & (BL_FLASH_DOUBLE_WORD_SIZE - 1U)) != 0U)
     {
         return false;
     }
 
-
-    /*
-     * Length must be a multiple of 8 bytes.
-     */
-
-    if ((length & 0x07U) != 0U)
+    if ((length & (BL_FLASH_DOUBLE_WORD_SIZE - 1U)) != 0U)
     {
         return false;
     }
 
-
-    /*
-     * Unlock Flash
-     */
+    BL_Flash_Unlock();
 
     if ((FLASH->CR & FLASH_CR_LOCK) != 0U)
     {
-        FLASH->KEYR = BL_FLASH_KEY1;
-        FLASH->KEYR = BL_FLASH_KEY2;
+        return false;
     }
-
-
-    /*
-     * Clear previous status flags
-     */
-
-    FLASH->SR = FLASH_SR_ALL_ERRORS;
-
 
     for (index = 0U;
          index < length;
-         index += 8U)
+         index += BL_FLASH_DOUBLE_WORD_SIZE)
     {
         /*
-         * Wait until Flash is ready
+         * Wait until previous operation is finished.
          */
-
-        while ((FLASH->SR & FLASH_SR_BSY) != 0U)
-        {
-        }
-
+        BL_Flash_WaitWhileBusy();
 
         /*
-         * Prepare 64-bit data
+         * Clear previous status flags.
          */
+        BL_Flash_ClearStatusFlags();
 
+        /*
+         * Build 64-bit double word.
+         */
         double_word =
-            ((uint64_t)data[index + 0U] << 0U)  |
-            ((uint64_t)data[index + 1U] << 8U)  |
+            ((uint64_t)data[index + 0U] <<  0U) |
+            ((uint64_t)data[index + 1U] <<  8U) |
             ((uint64_t)data[index + 2U] << 16U) |
             ((uint64_t)data[index + 3U] << 24U) |
             ((uint64_t)data[index + 4U] << 32U) |
@@ -302,75 +311,53 @@ bool BL_Flash_Write(
             ((uint64_t)data[index + 6U] << 48U) |
             ((uint64_t)data[index + 7U] << 56U);
 
-
         /*
-         * Enable programming
+         * Enable programming.
          */
-
         FLASH->CR |= FLASH_CR_PG;
 
-
         /*
-         * Program 64-bit double word
+         * STM32G4 double-word programming:
+         * first 32-bit write followed by second 32-bit write.
          */
-
         *(volatile uint32_t *)address =
             (uint32_t)(double_word & 0xFFFFFFFFUL);
 
         *(volatile uint32_t *)(address + 4U) =
             (uint32_t)(double_word >> 32U);
 
+        /*
+         * Wait until programming completes.
+         */
+        BL_Flash_WaitWhileBusy();
 
         /*
-         * Wait until programming completes
+         * Disable programming.
          */
-
-        while ((FLASH->SR & FLASH_SR_BSY) != 0U)
-        {
-        }
-
-
-        /*
-         * Disable programming
-         */
-
         FLASH->CR &= ~FLASH_CR_PG;
 
-
         /*
-         * Check errors
+         * Check programming errors.
          */
-
-        if ((FLASH->SR & FLASH_SR_ALL_ERRORS) != 0U)
+        if (BL_Flash_HasError())
         {
-            FLASH->CR |= FLASH_CR_LOCK;
-
+            BL_Flash_Lock();
             return false;
         }
 
-
         /*
-         * Verify immediately
+         * Verify programmed double word.
          */
-
-        if (*(volatile uint64_t *)address !=
-            double_word)
+        if (*(volatile uint64_t *)address != double_word)
         {
-            FLASH->CR |= FLASH_CR_LOCK;
-
+            BL_Flash_Lock();
             return false;
         }
 
-
-        address += 8U;
+        address += BL_FLASH_DOUBLE_WORD_SIZE;
     }
 
-
-    /*
-     * Lock Flash
-     */
-
-    FLASH->CR |= FLASH_CR_LOCK;
+    BL_Flash_Lock();
 
     return true;
 }
@@ -388,40 +375,32 @@ bool BL_Flash_Verify(
 {
     uint32_t index;
 
-
-    if ((data == NULL) ||
-        (length == 0U))
+    if ((data == NULL) || (length == 0U))
     {
         return false;
     }
 
-
-    if (!BL_Flash_IsRangeValid(
-            address,
-            length))
+    if (!BL_Flash_IsRangeValid(address, length))
     {
         return false;
     }
-
 
     for (index = 0U;
          index < length;
          index++)
     {
-        if (*(volatile uint8_t *)(address + index) !=
-            data[index])
+        if (*(volatile uint8_t *)(address + index) != data[index])
         {
             return false;
         }
     }
-
 
     return true;
 }
 
 
 /* ============================================================================
- * Flash Is Erased
+ * Check Flash Erased
  * ========================================================================== */
 
 bool BL_Flash_IsErased(
@@ -431,26 +410,25 @@ bool BL_Flash_IsErased(
 {
     uint32_t index;
 
-
-    if (!BL_Flash_IsRangeValid(
-            address,
-            length))
+    if (length == 0U)
     {
         return false;
     }
 
+    if (!BL_Flash_IsRangeValid(address, length))
+    {
+        return false;
+    }
 
     for (index = 0U;
          index < length;
          index++)
     {
-        if (*(volatile uint8_t *)(address + index) !=
-            0xFFU)
+        if (*(volatile uint8_t *)(address + index) != 0xFFU)
         {
             return false;
         }
     }
-
 
     return true;
 }
