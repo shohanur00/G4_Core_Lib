@@ -582,6 +582,21 @@ void UART_Driver_IRQHandler(
 }
 
 
+
+uint16_t UART_Driver_DataAvailable(uint8_t instance)
+{
+    if ((instance == 0U) ||
+        (instance > UART_INSTANCE_COUNT))
+    {
+        return 0U;
+    }
+
+    return RingBuffer_Count(
+        &uart_rx_ring_buffer[instance - 1U]
+    );
+}
+
+
 /* ============================================================================
  * UART Interrupt Service Routines
  * ========================================================================== */

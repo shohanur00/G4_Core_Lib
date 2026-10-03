@@ -129,6 +129,44 @@ typedef struct
 } BL_Protocol_Packet_t;
 
 
+
+typedef enum
+{
+    BL_PROTOCOL_PARSE_WAIT_SOF = 0U,
+    BL_PROTOCOL_PARSE_LENGTH,
+    BL_PROTOCOL_PARSE_TYPE,
+    BL_PROTOCOL_PARSE_COMMAND,
+    BL_PROTOCOL_PARSE_DATA,
+    BL_PROTOCOL_PARSE_CRC_HIGH,
+    BL_PROTOCOL_PARSE_CRC_LOW
+
+} BL_Protocol_ParseState_t;
+
+
+typedef struct
+{
+    BL_Protocol_Packet_t      packet;
+
+    BL_Protocol_ParseState_t  state;
+
+    uint8_t                   data_index;
+    uint8_t                   data_length;
+
+} BL_Protocol_Parser_t;
+
+
+void BL_Protocol_Parser_Init(
+    BL_Protocol_Parser_t *parser
+);
+
+
+bool BL_Protocol_Parser_PushByte(
+    BL_Protocol_Parser_t *parser,
+    uint8_t byte
+);
+
+
+
 /* ============================================================================
  * Protocol API
  * ========================================================================== */

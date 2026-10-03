@@ -110,3 +110,13 @@ bool Bootloader_UART_ReadByte(
         data
     );
 }
+
+
+/* ============================================================================
+ * Bootloader UART Data Available
+ * ========================================================================== */
+
+uint16_t Bootloader_UART_DataAvailable(void){
+    
+    return UART_Driver_DataAvailable(BOOTLOADER_UART_INSTANCE);
+}

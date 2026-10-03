@@ -15,34 +15,23 @@ static uint16_t BL_Protocol_ComputeCRC(
     const BL_Protocol_Packet_t *packet
 )
 {
-    uint8_t crc_data[BL_PROTOCOL_MAX_LENGTH];
+    uint8_t crc_data[BL_PROTOCOL_MAX_LENGTH + 1U];
+    uint8_t index = 0U;
 
-    if (packet == NULL)
+    crc_data[index++] = packet->length;
+    crc_data[index++] = packet->type;
+    crc_data[index++] = packet->command;
+
+    for (uint8_t i = 0U;
+         i < (packet->length - BL_PROTOCOL_FIXED_DATA_SIZE);
+         i++)
     {
-        return 0U;
-    }
-
-    /*
-     * CRC covers:
-     *
-     * [LENGTH] [TYPE] [COMMAND] [DATA...]
-     *
-     * SOF is not included.
-     */
-
-    crc_data[0] = packet->length;
-    crc_data[1] = packet->type;
-    crc_data[2] = packet->command;
-
-    for (uint8_t i = 0U; i < packet->length -
-                             BL_PROTOCOL_FIXED_DATA_SIZE; i++)
-    {
-        crc_data[3U + i] = packet->data[i];
+        crc_data[index++] = packet->data[i];
     }
 
     return CRC16_CCITT_FALSE(
         crc_data,
-        (uint32_t)packet->length + 1U
+        index
     );
 }
 
@@ -425,4 +414,168 @@ bool BL_Protocol_ExtractData(
     *length = data_length;
 
     return true;
+}
+
+
+
+
+static void BL_Protocol_Parser_Reset(
+    BL_Protocol_Parser_t *parser
+)
+{
+    parser->state      = BL_PROTOCOL_PARSE_WAIT_SOF;
+    parser->data_index = 0U;
+    parser->data_length = 0U;
+}
+
+
+void BL_Protocol_Parser_Init(
+    BL_Protocol_Parser_t *parser
+)
+{
+    if (parser == NULL)
+    {
+        return;
+    }
+
+    parser->packet.sof    = BL_PROTOCOL_SOF;
+    parser->packet.length = 0U;
+    parser->packet.type   = 0U;
+    parser->packet.command = BL_CMD_NONE;
+    parser->packet.crc    = 0U;
+
+    parser->data_index  = 0U;
+    parser->data_length = 0U;
+
+    parser->state = BL_PROTOCOL_PARSE_WAIT_SOF;
+}
+
+
+bool BL_Protocol_Parser_PushByte(
+    BL_Protocol_Parser_t *parser,
+    uint8_t byte
+)
+{
+    if (parser == NULL)
+    {
+        return false;
+    }
+
+    switch (parser->state)
+    {
+        case BL_PROTOCOL_PARSE_WAIT_SOF:
+
+            if (byte == BL_PROTOCOL_SOF)
+            {
+                parser->packet.sof = byte;
+                parser->state = BL_PROTOCOL_PARSE_LENGTH;
+            }
+
+            break;
+
+
+        case BL_PROTOCOL_PARSE_LENGTH:
+
+            if ((byte < BL_PROTOCOL_MIN_LENGTH) ||
+                (byte > BL_PROTOCOL_MAX_LENGTH))
+            {
+                BL_Protocol_Parser_Reset(parser);
+                break;
+            }
+
+            parser->packet.length = byte;
+
+            parser->data_length =
+                byte - BL_PROTOCOL_FIXED_DATA_SIZE;
+
+            parser->data_index = 0U;
+
+            parser->state = BL_PROTOCOL_PARSE_TYPE;
+
+            break;
+
+
+        case BL_PROTOCOL_PARSE_TYPE:
+
+            parser->packet.type = byte;
+
+            parser->state = BL_PROTOCOL_PARSE_COMMAND;
+
+            break;
+
+
+        case BL_PROTOCOL_PARSE_COMMAND:
+
+            parser->packet.command = byte;
+
+            if (parser->data_length > 0U)
+            {
+                parser->state = BL_PROTOCOL_PARSE_DATA;
+            }
+            else
+            {
+                parser->state = BL_PROTOCOL_PARSE_CRC_HIGH;
+            }
+
+            break;
+
+
+        case BL_PROTOCOL_PARSE_DATA:
+
+            parser->packet.data[
+                parser->data_index
+            ] = byte;
+
+            parser->data_index++;
+
+            if (parser->data_index >= parser->data_length)
+            {
+                parser->state = BL_PROTOCOL_PARSE_CRC_HIGH;
+            }
+
+            break;
+
+
+        case BL_PROTOCOL_PARSE_CRC_HIGH:
+
+            parser->packet.crc =
+                ((uint16_t)byte << 8U);
+
+            parser->state = BL_PROTOCOL_PARSE_CRC_LOW;
+
+            break;
+
+
+        case BL_PROTOCOL_PARSE_CRC_LOW:
+        {
+            uint16_t received_crc;
+
+            received_crc =
+                parser->packet.crc |
+                (uint16_t)byte;
+
+            parser->packet.crc = received_crc;
+
+            parser->state =
+                BL_PROTOCOL_PARSE_WAIT_SOF;
+
+            if (BL_Protocol_ComputeCRC(
+                    &parser->packet
+                ) == received_crc)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+
+        default:
+
+            BL_Protocol_Parser_Reset(parser);
+
+            break;
+    }
+
+    return false;
 }

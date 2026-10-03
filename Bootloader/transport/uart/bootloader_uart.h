@@ -32,4 +32,7 @@ bool Bootloader_UART_ReadByte(
     uint8_t *data
 );
 
+
+uint16_t Bootloader_UART_DataAvailable(void);
+
 #endif /* BOOTLOADER_UART_H */

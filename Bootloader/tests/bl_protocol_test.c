@@ -5,17 +5,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
 /* ============================================================================
  * Private Definitions
  * ========================================================================== */
 
-#define BL_PROTOCOL_TEST_DATA_SIZE     (5U)
-
-#define BL_PROTOCOL_TEST_DATA_0        (0x31U)
-#define BL_PROTOCOL_TEST_DATA_1        (0x12U)
-#define BL_PROTOCOL_TEST_DATA_2        (0x34U)
-#define BL_PROTOCOL_TEST_DATA_3        (0x56U)
-#define BL_PROTOCOL_TEST_DATA_4        (0x78U)
+#define TEST_LOG_MODULE     BL_PROTOCOL_TEST_LOG_MODULE
 
 
 /* ============================================================================
@@ -27,8 +22,11 @@ static bool BL_Protocol_Test_CommandPacket(void)
     BL_Protocol_Packet_t packet;
     BL_Protocol_Packet_t received_packet;
 
-    uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
+    BL_Command_t extracted_command;
+
+    uint8_t  buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
     uint16_t buffer_length;
+
 
     /* ------------------------------------------------------------------------
      * Create Command Packet
@@ -36,16 +34,17 @@ static bool BL_Protocol_Test_CommandPacket(void)
 
     BL_Protocol_CreateCommandPacket(
         &packet,
-        BL_CMD_FW_UPDATE_REQ
+        BL_PROTOCOL_TEST_VALID_COMMAND
     );
 
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Command created: CMD=0x%X LENGTH=%u CRC=0x%X",
-        packet.data[0],
+        packet.command,
         packet.length,
         packet.crc
     );
+
 
     /* ------------------------------------------------------------------------
      * Validate Created Packet
@@ -54,32 +53,44 @@ static bool BL_Protocol_Test_CommandPacket(void)
     if (packet.sof != BL_PROTOCOL_SOF)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Command SOF mismatch"
         );
 
         return false;
     }
 
-    if (packet.length != 1U)
+    if (packet.type != BL_PACKET_TYPE_COMMAND)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
-            "Command length mismatch"
+            TEST_LOG_MODULE,
+            "Command TYPE mismatch"
         );
 
         return false;
     }
 
-    if (packet.data[0] != (uint8_t)BL_CMD_FW_UPDATE_REQ)
+    if (packet.length != BL_PROTOCOL_FIXED_DATA_SIZE)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
+            "Command LENGTH mismatch"
+        );
+
+        return false;
+    }
+
+    if (packet.command !=
+        (uint8_t)BL_PROTOCOL_TEST_VALID_COMMAND)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
             "Command value mismatch"
         );
 
         return false;
     }
+
 
     /* ------------------------------------------------------------------------
      * Packet -> Bytes
@@ -92,7 +103,7 @@ static bool BL_Protocol_Test_CommandPacket(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Command PacketToBytes FAILED"
         );
 
@@ -103,46 +114,58 @@ static bool BL_Protocol_Test_CommandPacket(void)
         (BL_PROTOCOL_OVERHEAD_SIZE + packet.length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Command frame length mismatch"
         );
 
         return false;
     }
 
+
     /* ------------------------------------------------------------------------
      * Validate Serialized Frame
      * ---------------------------------------------------------------------- */
 
-    if (buffer[0] != BL_PROTOCOL_SOF)
+    if (buffer[0U] != BL_PROTOCOL_SOF)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Serialized SOF mismatch"
         );
 
         return false;
     }
 
-    if (buffer[1] != packet.length)
+    if (buffer[1U] != packet.length)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Serialized LENGTH mismatch"
         );
 
         return false;
     }
 
-    if (buffer[2] != packet.data[0])
+    if (buffer[2U] != packet.type)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
+            "Serialized TYPE mismatch"
+        );
+
+        return false;
+    }
+
+    if (buffer[3U] != packet.command)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
             "Serialized command mismatch"
         );
 
         return false;
     }
+
 
     /* ------------------------------------------------------------------------
      * Bytes -> Packet
@@ -154,12 +177,13 @@ static bool BL_Protocol_Test_CommandPacket(void)
             &received_packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Command BytesToPacket FAILED"
         );
 
         return false;
     }
+
 
     /* ------------------------------------------------------------------------
      * Validate Command
@@ -167,20 +191,47 @@ static bool BL_Protocol_Test_CommandPacket(void)
 
     if (!BL_Protocol_IsCommand(
             &received_packet,
-            BL_CMD_FW_UPDATE_REQ))
+            BL_PROTOCOL_TEST_VALID_COMMAND))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Command validation FAILED"
         );
 
         return false;
     }
 
+    if (!BL_Protocol_ExtractCommand(
+            &received_packet,
+            &extracted_command))
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Command extraction FAILED"
+        );
+
+        return false;
+    }
+
+    if (extracted_command != BL_PROTOCOL_TEST_VALID_COMMAND)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Extracted command mismatch"
+        );
+
+        return false;
+    }
+
+
+    /* ------------------------------------------------------------------------
+     * Validate Parsed Packet
+     * ---------------------------------------------------------------------- */
+
     if (received_packet.sof != packet.sof)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Command SOF mismatch after parse"
         );
 
@@ -190,18 +241,28 @@ static bool BL_Protocol_Test_CommandPacket(void)
     if (received_packet.length != packet.length)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
-            "Command length mismatch after parse"
+            TEST_LOG_MODULE,
+            "Command LENGTH mismatch after parse"
         );
 
         return false;
     }
 
-    if (received_packet.data[0] != packet.data[0])
+    if (received_packet.type != packet.type)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
-            "Command data mismatch after parse"
+            TEST_LOG_MODULE,
+            "Command TYPE mismatch after parse"
+        );
+
+        return false;
+    }
+
+    if (received_packet.command != packet.command)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Command value mismatch after parse"
         );
 
         return false;
@@ -210,15 +271,16 @@ static bool BL_Protocol_Test_CommandPacket(void)
     if (received_packet.crc != packet.crc)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Command CRC mismatch"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Command packet test PASSED"
     );
 
@@ -238,15 +300,10 @@ static bool BL_Protocol_Test_DataPacket(void)
     uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
 
     const uint8_t test_data[BL_PROTOCOL_TEST_DATA_SIZE] =
-    {
-        BL_PROTOCOL_TEST_DATA_0,
-        BL_PROTOCOL_TEST_DATA_1,
-        BL_PROTOCOL_TEST_DATA_2,
-        BL_PROTOCOL_TEST_DATA_3,
-        BL_PROTOCOL_TEST_DATA_4
-    };
+        BL_PROTOCOL_TEST_DATA_INIT;
 
     uint16_t buffer_length;
+
 
     /* ------------------------------------------------------------------------
      * Create Data Packet
@@ -259,11 +316,12 @@ static bool BL_Protocol_Test_DataPacket(void)
     );
 
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Data created: LENGTH=%u CRC=0x%X",
         packet.length,
         packet.crc
     );
+
 
     /* ------------------------------------------------------------------------
      * Validate Created Packet
@@ -272,29 +330,55 @@ static bool BL_Protocol_Test_DataPacket(void)
     if (packet.sof != BL_PROTOCOL_SOF)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Data SOF mismatch"
         );
 
         return false;
     }
 
-    if (packet.length != sizeof(test_data))
+    if (packet.type != BL_PACKET_TYPE_DATA)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
-            "Data length mismatch"
+            TEST_LOG_MODULE,
+            "Data TYPE mismatch"
         );
 
         return false;
     }
 
-    for (uint8_t i = 0U; i < packet.length; i++)
+    if (packet.command != BL_CMD_NONE)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Data COMMAND mismatch"
+        );
+
+        return false;
+    }
+
+    if (packet.length !=
+        (BL_PROTOCOL_FIXED_DATA_SIZE + sizeof(test_data)))
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Data LENGTH mismatch"
+        );
+
+        return false;
+    }
+
+
+    /* ------------------------------------------------------------------------
+     * Validate Data
+     * ---------------------------------------------------------------------- */
+
+    for (uint16_t i = 0U; i < sizeof(test_data); i++)
     {
         if (packet.data[i] != test_data[i])
         {
             LOG_ERROR(
-                LOG_MODULE_BOOTLOADER,
+                TEST_LOG_MODULE,
                 "Created data mismatch at index %u",
                 i
             );
@@ -302,6 +386,7 @@ static bool BL_Protocol_Test_DataPacket(void)
             return false;
         }
     }
+
 
     /* ------------------------------------------------------------------------
      * Packet -> Bytes
@@ -314,7 +399,7 @@ static bool BL_Protocol_Test_DataPacket(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Data PacketToBytes FAILED"
         );
 
@@ -325,12 +410,72 @@ static bool BL_Protocol_Test_DataPacket(void)
         (BL_PROTOCOL_OVERHEAD_SIZE + packet.length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Data frame length mismatch"
         );
 
         return false;
     }
+
+
+    /* ------------------------------------------------------------------------
+     * Validate Serialized Frame
+     * ---------------------------------------------------------------------- */
+
+    if (buffer[0U] != BL_PROTOCOL_SOF)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Serialized data SOF mismatch"
+        );
+
+        return false;
+    }
+
+    if (buffer[1U] != packet.length)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Serialized data LENGTH mismatch"
+        );
+
+        return false;
+    }
+
+    if (buffer[2U] != packet.type)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Serialized data TYPE mismatch"
+        );
+
+        return false;
+    }
+
+    if (buffer[3U] != packet.command)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Serialized data COMMAND mismatch"
+        );
+
+        return false;
+    }
+
+    for (uint16_t i = 0U; i < sizeof(test_data); i++)
+    {
+        if (buffer[4U + i] != test_data[i])
+        {
+            LOG_ERROR(
+                TEST_LOG_MODULE,
+                "Serialized data mismatch at index %u",
+                i
+            );
+
+            return false;
+        }
+    }
+
 
     /* ------------------------------------------------------------------------
      * Bytes -> Packet
@@ -342,51 +487,69 @@ static bool BL_Protocol_Test_DataPacket(void)
             &received_packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Data BytesToPacket FAILED"
         );
 
         return false;
     }
 
+
     /* ------------------------------------------------------------------------
-     * Validate SOF
+     * Validate Parsed Packet
      * ---------------------------------------------------------------------- */
 
     if (received_packet.sof != packet.sof)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Data SOF mismatch after parse"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * Validate Length
-     * ---------------------------------------------------------------------- */
-
     if (received_packet.length != packet.length)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
-            "Data length mismatch after parse"
+            TEST_LOG_MODULE,
+            "Data LENGTH mismatch after parse"
         );
 
         return false;
     }
 
+    if (received_packet.type != packet.type)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Data TYPE mismatch after parse"
+        );
+
+        return false;
+    }
+
+    if (received_packet.command != BL_CMD_NONE)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Data COMMAND mismatch after parse"
+        );
+
+        return false;
+    }
+
+
     /* ------------------------------------------------------------------------
      * Validate Data
      * ---------------------------------------------------------------------- */
 
-    for (uint8_t i = 0U; i < packet.length; i++)
+    for (uint16_t i = 0U; i < sizeof(test_data); i++)
     {
-        if (received_packet.data[i] != packet.data[i])
+        if (received_packet.data[i] != test_data[i])
         {
             LOG_ERROR(
-                LOG_MODULE_BOOTLOADER,
+                TEST_LOG_MODULE,
                 "Data mismatch at index %u",
                 i
             );
@@ -395,6 +558,7 @@ static bool BL_Protocol_Test_DataPacket(void)
         }
     }
 
+
     /* ------------------------------------------------------------------------
      * Validate CRC
      * ---------------------------------------------------------------------- */
@@ -402,15 +566,16 @@ static bool BL_Protocol_Test_DataPacket(void)
     if (received_packet.crc != packet.crc)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Data CRC mismatch"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Data packet test PASSED"
     );
 
@@ -427,12 +592,9 @@ static bool BL_Protocol_Test_ZeroLengthPacket(void)
     BL_Protocol_Packet_t packet;
     BL_Protocol_Packet_t received_packet;
 
-    uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
+    uint8_t  buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
     uint16_t buffer_length;
 
-    /* ------------------------------------------------------------------------
-     * Create Zero-Length Packet
-     * ---------------------------------------------------------------------- */
 
     BL_Protocol_CreateDataPacket(
         &packet,
@@ -440,29 +602,47 @@ static bool BL_Protocol_Test_ZeroLengthPacket(void)
         0U
     );
 
+
     if (packet.sof != BL_PROTOCOL_SOF)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Zero-length SOF mismatch"
         );
 
         return false;
     }
 
-    if (packet.length != 0U)
+    if (packet.type != BL_PACKET_TYPE_DATA)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
+            "Zero-length TYPE mismatch"
+        );
+
+        return false;
+    }
+
+    if (packet.command != BL_CMD_NONE)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Zero-length COMMAND mismatch"
+        );
+
+        return false;
+    }
+
+    if (packet.length != BL_PROTOCOL_FIXED_DATA_SIZE)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
             "Zero-length LENGTH mismatch"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * Serialize
-     * ---------------------------------------------------------------------- */
 
     if (!BL_Protocol_PacketToBytes(
             &packet,
@@ -471,7 +651,7 @@ static bool BL_Protocol_Test_ZeroLengthPacket(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Zero-length PacketToBytes FAILED"
         );
 
@@ -481,16 +661,13 @@ static bool BL_Protocol_Test_ZeroLengthPacket(void)
     if (buffer_length != BL_PROTOCOL_MIN_FRAME_SIZE)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Zero-length frame size mismatch"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * Parse
-     * ---------------------------------------------------------------------- */
 
     if (!BL_Protocol_BytesToPacket(
             buffer,
@@ -498,18 +675,40 @@ static bool BL_Protocol_Test_ZeroLengthPacket(void)
             &received_packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Zero-length BytesToPacket FAILED"
         );
 
         return false;
     }
 
-    if (received_packet.length != 0U)
+
+    if (received_packet.length !=
+        BL_PROTOCOL_FIXED_DATA_SIZE)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Zero-length parsed LENGTH mismatch"
+        );
+
+        return false;
+    }
+
+    if (received_packet.type != BL_PACKET_TYPE_DATA)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Zero-length parsed TYPE mismatch"
+        );
+
+        return false;
+    }
+
+    if (received_packet.command != BL_CMD_NONE)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Zero-length parsed COMMAND mismatch"
         );
 
         return false;
@@ -518,15 +717,16 @@ static bool BL_Protocol_Test_ZeroLengthPacket(void)
     if (received_packet.crc != packet.crc)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Zero-length CRC mismatch"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Zero-length packet test PASSED"
     );
 
@@ -548,14 +748,18 @@ static bool BL_Protocol_Test_MaxLengthPacket(void)
 
     uint16_t buffer_length;
 
+
     /* ------------------------------------------------------------------------
      * Prepare Maximum-Length Data
      * ---------------------------------------------------------------------- */
 
-    for (uint8_t i = 0U; i < BL_PROTOCOL_MAX_DATA_SIZE; i++)
+    for (uint16_t i = 0U;
+         i < BL_PROTOCOL_MAX_DATA_SIZE;
+         i++)
     {
-        test_data[i] = i;
+        test_data[i] = (uint8_t)i;
     }
+
 
     /* ------------------------------------------------------------------------
      * Create Packet
@@ -567,15 +771,62 @@ static bool BL_Protocol_Test_MaxLengthPacket(void)
         BL_PROTOCOL_MAX_DATA_SIZE
     );
 
-    if (packet.length != BL_PROTOCOL_MAX_DATA_SIZE)
+
+    /* ------------------------------------------------------------------------
+     * Validate Packet
+     * ---------------------------------------------------------------------- */
+
+    if (packet.length != BL_PROTOCOL_MAX_LENGTH)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Maximum LENGTH mismatch"
         );
 
         return false;
     }
+
+    if (packet.type != BL_PACKET_TYPE_DATA)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Maximum TYPE mismatch"
+        );
+
+        return false;
+    }
+
+    if (packet.command != BL_CMD_NONE)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Maximum COMMAND mismatch"
+        );
+
+        return false;
+    }
+
+
+    /* ------------------------------------------------------------------------
+     * Validate Data
+     * ---------------------------------------------------------------------- */
+
+    for (uint16_t i = 0U;
+         i < BL_PROTOCOL_MAX_DATA_SIZE;
+         i++)
+    {
+        if (packet.data[i] != test_data[i])
+        {
+            LOG_ERROR(
+                TEST_LOG_MODULE,
+                "Maximum data mismatch at index %u",
+                i
+            );
+
+            return false;
+        }
+    }
+
 
     /* ------------------------------------------------------------------------
      * Serialize
@@ -588,7 +839,7 @@ static bool BL_Protocol_Test_MaxLengthPacket(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Maximum PacketToBytes FAILED"
         );
 
@@ -598,12 +849,13 @@ static bool BL_Protocol_Test_MaxLengthPacket(void)
     if (buffer_length != BL_PROTOCOL_MAX_FRAME_SIZE)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Maximum frame size mismatch"
         );
 
         return false;
     }
+
 
     /* ------------------------------------------------------------------------
      * Parse
@@ -615,24 +867,62 @@ static bool BL_Protocol_Test_MaxLengthPacket(void)
             &received_packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Maximum BytesToPacket FAILED"
         );
 
         return false;
     }
 
+
+    /* ------------------------------------------------------------------------
+     * Validate Parsed Packet
+     * ---------------------------------------------------------------------- */
+
+    if (received_packet.length != packet.length)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Maximum parsed LENGTH mismatch"
+        );
+
+        return false;
+    }
+
+    if (received_packet.type != packet.type)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Maximum parsed TYPE mismatch"
+        );
+
+        return false;
+    }
+
+    if (received_packet.command != packet.command)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Maximum parsed COMMAND mismatch"
+        );
+
+        return false;
+    }
+
+
     /* ------------------------------------------------------------------------
      * Validate Data
      * ---------------------------------------------------------------------- */
 
-    for (uint8_t i = 0U; i < BL_PROTOCOL_MAX_DATA_SIZE; i++)
+    for (uint16_t i = 0U;
+         i < BL_PROTOCOL_MAX_DATA_SIZE;
+         i++)
     {
         if (received_packet.data[i] != test_data[i])
         {
             LOG_ERROR(
-                LOG_MODULE_BOOTLOADER,
-                "Maximum data mismatch at index %u",
+                TEST_LOG_MODULE,
+                "Maximum parsed data mismatch at index %u",
                 i
             );
 
@@ -640,18 +930,24 @@ static bool BL_Protocol_Test_MaxLengthPacket(void)
         }
     }
 
+
+    /* ------------------------------------------------------------------------
+     * Validate CRC
+     * ---------------------------------------------------------------------- */
+
     if (received_packet.crc != packet.crc)
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Maximum CRC mismatch"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Maximum-length packet test PASSED"
     );
 
@@ -667,17 +963,15 @@ static bool BL_Protocol_Test_CRCCorruption(void)
 {
     BL_Protocol_Packet_t packet;
 
-    uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
+    uint8_t  buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
     uint16_t buffer_length;
 
-    /* ------------------------------------------------------------------------
-     * Create Packet
-     * ---------------------------------------------------------------------- */
 
     BL_Protocol_CreateCommandPacket(
         &packet,
-        BL_CMD_FW_UPDATE_REQ
+        BL_PROTOCOL_TEST_VALID_COMMAND
     );
+
 
     if (!BL_Protocol_PacketToBytes(
             &packet,
@@ -686,22 +980,17 @@ static bool BL_Protocol_Test_CRCCorruption(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "CRC corruption PacketToBytes FAILED"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * Corrupt Data
-     * ---------------------------------------------------------------------- */
 
-    buffer[2U] ^= 0x01U;
+    /* Corrupt command byte */
+    buffer[3U] ^= 0x01U;
 
-    /* ------------------------------------------------------------------------
-     * Packet Must Be Rejected
-     * ---------------------------------------------------------------------- */
 
     if (BL_Protocol_BytesToPacket(
             buffer,
@@ -709,15 +998,16 @@ static bool BL_Protocol_Test_CRCCorruption(void)
             &packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "CRC corruption was NOT detected"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "CRC corruption test PASSED"
     );
 
@@ -733,17 +1023,15 @@ static bool BL_Protocol_Test_InvalidSOF(void)
 {
     BL_Protocol_Packet_t packet;
 
-    uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
+    uint8_t  buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
     uint16_t buffer_length;
 
-    /* ------------------------------------------------------------------------
-     * Create Valid Packet
-     * ---------------------------------------------------------------------- */
 
     BL_Protocol_CreateCommandPacket(
         &packet,
-        BL_CMD_FW_UPDATE_REQ
+        BL_PROTOCOL_TEST_VALID_COMMAND
     );
+
 
     if (!BL_Protocol_PacketToBytes(
             &packet,
@@ -752,22 +1040,16 @@ static bool BL_Protocol_Test_InvalidSOF(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Invalid SOF PacketToBytes FAILED"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * Corrupt SOF
-     * ---------------------------------------------------------------------- */
 
-    buffer[0] ^= 0xFFU;
+    buffer[0U] ^= 0xFFU;
 
-    /* ------------------------------------------------------------------------
-     * Packet Must Be Rejected
-     * ---------------------------------------------------------------------- */
 
     if (BL_Protocol_BytesToPacket(
             buffer,
@@ -775,15 +1057,16 @@ static bool BL_Protocol_Test_InvalidSOF(void)
             &packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Invalid SOF was NOT detected"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Invalid SOF test PASSED"
     );
 
@@ -799,17 +1082,15 @@ static bool BL_Protocol_Test_InvalidLength(void)
 {
     BL_Protocol_Packet_t packet;
 
-    uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
+    uint8_t  buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
     uint16_t buffer_length;
 
-    /* ------------------------------------------------------------------------
-     * Create Valid Packet
-     * ---------------------------------------------------------------------- */
 
     BL_Protocol_CreateCommandPacket(
         &packet,
-        BL_CMD_FW_UPDATE_REQ
+        BL_PROTOCOL_TEST_VALID_COMMAND
     );
+
 
     if (!BL_Protocol_PacketToBytes(
             &packet,
@@ -818,18 +1099,16 @@ static bool BL_Protocol_Test_InvalidLength(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Invalid LENGTH PacketToBytes FAILED"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * Set LENGTH Beyond Maximum
-     * ---------------------------------------------------------------------- */
 
-    buffer[1] = BL_PROTOCOL_MAX_DATA_SIZE + 1U;
+    buffer[1U] = BL_PROTOCOL_MAX_LENGTH + 1U;
+
 
     if (BL_Protocol_BytesToPacket(
             buffer,
@@ -837,15 +1116,16 @@ static bool BL_Protocol_Test_InvalidLength(void)
             &packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Invalid LENGTH was NOT detected"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Invalid LENGTH test PASSED"
     );
 
@@ -863,14 +1143,14 @@ static bool BL_Protocol_Test_ShortFrame(void)
 
     uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
 
-    /* ------------------------------------------------------------------------
-     * Frame Smaller Than Minimum
-     * ---------------------------------------------------------------------- */
 
-    for (uint8_t i = 0U; i < BL_PROTOCOL_MIN_FRAME_SIZE - 1U; i++)
+    for (uint16_t i = 0U;
+         i < BL_PROTOCOL_MIN_FRAME_SIZE - 1U;
+         i++)
     {
         buffer[i] = 0U;
     }
+
 
     if (BL_Protocol_BytesToPacket(
             buffer,
@@ -878,15 +1158,16 @@ static bool BL_Protocol_Test_ShortFrame(void)
             &packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Short frame was NOT rejected"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Short frame test PASSED"
     );
 
@@ -902,18 +1183,24 @@ static bool BL_Protocol_Test_TruncatedFrame(void)
 {
     BL_Protocol_Packet_t packet;
 
-    uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
+    uint8_t  buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
     uint16_t buffer_length;
 
-    /* ------------------------------------------------------------------------
-     * Create Valid Packet
-     * ---------------------------------------------------------------------- */
+    static const uint8_t test_data[] =
+    {
+        0x11U,
+        0x22U,
+        0x33U,
+        0x44U
+    };
+
 
     BL_Protocol_CreateDataPacket(
         &packet,
-        (const uint8_t[]){0x11U, 0x22U, 0x33U, 0x44U},
-        4U
+        test_data,
+        sizeof(test_data)
     );
+
 
     if (!BL_Protocol_PacketToBytes(
             &packet,
@@ -922,16 +1209,13 @@ static bool BL_Protocol_Test_TruncatedFrame(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Truncated frame PacketToBytes FAILED"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * Remove Last Byte
-     * ---------------------------------------------------------------------- */
 
     if (BL_Protocol_BytesToPacket(
             buffer,
@@ -939,15 +1223,16 @@ static bool BL_Protocol_Test_TruncatedFrame(void)
             &packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Truncated frame was NOT rejected"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Truncated frame test PASSED"
     );
 
@@ -963,21 +1248,15 @@ static bool BL_Protocol_Test_SmallBuffer(void)
 {
     BL_Protocol_Packet_t packet;
 
-    uint8_t buffer[BL_PROTOCOL_MIN_FRAME_SIZE - 1U];
+    uint8_t  buffer[BL_PROTOCOL_MIN_FRAME_SIZE - 1U];
     uint16_t buffer_length;
 
-    /* ------------------------------------------------------------------------
-     * Create Packet
-     * ---------------------------------------------------------------------- */
 
     BL_Protocol_CreateCommandPacket(
         &packet,
-        BL_CMD_FW_UPDATE_REQ
+        BL_PROTOCOL_TEST_VALID_COMMAND
     );
 
-    /* ------------------------------------------------------------------------
-     * Buffer Too Small
-     * ---------------------------------------------------------------------- */
 
     if (BL_Protocol_PacketToBytes(
             &packet,
@@ -986,15 +1265,16 @@ static bool BL_Protocol_Test_SmallBuffer(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Small buffer was NOT rejected"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Small buffer test PASSED"
     );
 
@@ -1010,38 +1290,121 @@ static bool BL_Protocol_Test_InvalidCommand(void)
 {
     BL_Protocol_Packet_t packet;
 
+
     BL_Protocol_CreateCommandPacket(
         &packet,
-        BL_CMD_FW_UPDATE_REQ
+        BL_PROTOCOL_TEST_VALID_COMMAND
     );
+
 
     if (BL_Protocol_IsCommand(
             &packet,
-            BL_CMD_DEVICE_ID_REQ))
+            BL_PROTOCOL_TEST_INVALID_COMMAND))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Invalid command validation FAILED"
         );
 
         return false;
     }
 
+
     if (!BL_Protocol_IsCommand(
             &packet,
-            BL_CMD_FW_UPDATE_REQ))
+            BL_PROTOCOL_TEST_VALID_COMMAND))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Valid command validation FAILED"
         );
 
         return false;
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Command validation test PASSED"
+    );
+
+    return true;
+}
+
+
+/* ============================================================================
+ * Extract Command Test
+ * ========================================================================== */
+
+static bool BL_Protocol_Test_ExtractCommand(void)
+{
+    BL_Protocol_Packet_t command_packet;
+    BL_Protocol_Packet_t data_packet;
+
+    BL_Command_t command;
+
+
+    /* ------------------------------------------------------------------------
+     * Valid Command Packet
+     * ---------------------------------------------------------------------- */
+
+    BL_Protocol_CreateCommandPacket(
+        &command_packet,
+        BL_PROTOCOL_TEST_VALID_COMMAND
+    );
+
+
+    if (!BL_Protocol_ExtractCommand(
+            &command_packet,
+            &command))
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Command extraction FAILED"
+        );
+
+        return false;
+    }
+
+
+    if (command != BL_PROTOCOL_TEST_VALID_COMMAND)
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Extracted command mismatch"
+        );
+
+        return false;
+    }
+
+
+    /* ------------------------------------------------------------------------
+     * Data Packet Must Not Be Treated As Command
+     * ---------------------------------------------------------------------- */
+
+    BL_Protocol_CreateDataPacket(
+        &data_packet,
+        NULL,
+        0U
+    );
+
+
+    if (BL_Protocol_ExtractCommand(
+            &data_packet,
+            &command))
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "Data packet accepted as command"
+        );
+
+        return false;
+    }
+
+
+    LOG_DEBUG(
+        TEST_LOG_MODULE,
+        "Extract command test PASSED"
     );
 
     return true;
@@ -1055,25 +1418,13 @@ static bool BL_Protocol_Test_InvalidCommand(void)
 static bool BL_Protocol_Test_AllCommands(void)
 {
     static const BL_Command_t commands[] =
-    {
-        BL_CMD_SYNC_OBSERVED,
-        BL_CMD_FW_UPDATE_REQ,
-        BL_CMD_FW_UPDATE_RES,
-        BL_CMD_DEVICE_ID_REQ,
-        BL_CMD_DEVICE_ID_RES,
-        BL_CMD_FW_LENGTH_REQ,
-        BL_CMD_FW_LENGTH_RES,
-        BL_CMD_READY_FOR_DATA,
-        BL_CMD_UPDATE_SUCCESSFUL,
-        BL_CMD_ACK,
-        BL_CMD_NACK,
-        BL_CMD_RETX
-    };
+        BL_PROTOCOL_TEST_COMMAND_LIST;
 
     BL_Protocol_Packet_t packet;
 
-    uint32_t command_count =
+    const uint32_t command_count =
         sizeof(commands) / sizeof(commands[0]);
+
 
     for (uint32_t i = 0U; i < command_count; i++)
     {
@@ -1082,34 +1433,49 @@ static bool BL_Protocol_Test_AllCommands(void)
             commands[i]
         );
 
-        if (packet.length != 1U)
+
+        if (packet.length != BL_PROTOCOL_FIXED_DATA_SIZE)
         {
             LOG_ERROR(
-                LOG_MODULE_BOOTLOADER,
-                "Command length FAILED: index=%u",
+                TEST_LOG_MODULE,
+                "Command LENGTH FAILED: index=%u",
                 i
             );
 
             return false;
         }
 
-        if (packet.data[0] != (uint8_t)commands[i])
+
+        if (packet.type != BL_PACKET_TYPE_COMMAND)
         {
             LOG_ERROR(
-                LOG_MODULE_BOOTLOADER,
-                "Command data FAILED: index=%u",
+                TEST_LOG_MODULE,
+                "Command TYPE FAILED: index=%u",
                 i
             );
 
             return false;
         }
+
+
+        if (packet.command != (uint8_t)commands[i])
+        {
+            LOG_ERROR(
+                TEST_LOG_MODULE,
+                "Command value FAILED: index=%u",
+                i
+            );
+
+            return false;
+        }
+
 
         if (!BL_Protocol_IsCommand(
                 &packet,
                 commands[i]))
         {
             LOG_ERROR(
-                LOG_MODULE_BOOTLOADER,
+                TEST_LOG_MODULE,
                 "Command validation FAILED: index=%u",
                 i
             );
@@ -1118,8 +1484,9 @@ static bool BL_Protocol_Test_AllCommands(void)
         }
     }
 
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "All command test PASSED"
     );
 
@@ -1134,12 +1501,14 @@ static bool BL_Protocol_Test_AllCommands(void)
 static bool BL_Protocol_Test_NullParameters(void)
 {
     BL_Protocol_Packet_t packet;
-    uint8_t buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
+
+    uint8_t  buffer[BL_PROTOCOL_MAX_FRAME_SIZE];
     uint16_t buffer_length;
 
-    /* ------------------------------------------------------------------------
-     * PacketToBytes NULL Packet
-     * ---------------------------------------------------------------------- */
+    BL_Command_t command;
+
+
+    /* PacketToBytes: NULL packet */
 
     if (BL_Protocol_PacketToBytes(
             NULL,
@@ -1148,21 +1517,21 @@ static bool BL_Protocol_Test_NullParameters(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "NULL packet was NOT rejected"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * PacketToBytes NULL Buffer
-     * ---------------------------------------------------------------------- */
+
+    /* PacketToBytes: NULL buffer */
 
     BL_Protocol_CreateCommandPacket(
         &packet,
-        BL_CMD_FW_UPDATE_REQ
+        BL_PROTOCOL_TEST_VALID_COMMAND
     );
+
 
     if (BL_Protocol_PacketToBytes(
             &packet,
@@ -1171,16 +1540,15 @@ static bool BL_Protocol_Test_NullParameters(void)
             &buffer_length))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "NULL buffer was NOT rejected"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * PacketToBytes NULL Length
-     * ---------------------------------------------------------------------- */
+
+    /* PacketToBytes: NULL length */
 
     if (BL_Protocol_PacketToBytes(
             &packet,
@@ -1189,16 +1557,15 @@ static bool BL_Protocol_Test_NullParameters(void)
             NULL))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "NULL length was NOT rejected"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * BytesToPacket NULL Buffer
-     * ---------------------------------------------------------------------- */
+
+    /* BytesToPacket: NULL input buffer */
 
     if (BL_Protocol_BytesToPacket(
             NULL,
@@ -1206,16 +1573,15 @@ static bool BL_Protocol_Test_NullParameters(void)
             &packet))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "NULL input buffer was NOT rejected"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * BytesToPacket NULL Packet
-     * ---------------------------------------------------------------------- */
+
+    /* BytesToPacket: NULL output packet */
 
     if (BL_Protocol_BytesToPacket(
             buffer,
@@ -1223,31 +1589,61 @@ static bool BL_Protocol_Test_NullParameters(void)
             NULL))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "NULL output packet was NOT rejected"
         );
 
         return false;
     }
 
-    /* ------------------------------------------------------------------------
-     * IsCommand NULL Packet
-     * ---------------------------------------------------------------------- */
+
+    /* IsCommand: NULL packet */
 
     if (BL_Protocol_IsCommand(
             NULL,
             BL_CMD_ACK))
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "NULL command packet was NOT rejected"
         );
 
         return false;
     }
 
+
+    /* ExtractCommand: NULL packet */
+
+    if (BL_Protocol_ExtractCommand(
+            NULL,
+            &command))
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "NULL extract packet was NOT rejected"
+        );
+
+        return false;
+    }
+
+
+    /* ExtractCommand: NULL command */
+
+    if (BL_Protocol_ExtractCommand(
+            &packet,
+            NULL))
+    {
+        LOG_ERROR(
+            TEST_LOG_MODULE,
+            "NULL extract command was NOT rejected"
+        );
+
+        return false;
+    }
+
+
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "NULL parameter test PASSED"
     );
 
@@ -1256,134 +1652,213 @@ static bool BL_Protocol_Test_NullParameters(void)
 
 
 /* ============================================================================
- * Public Functions
+ * Public Function
  * ========================================================================== */
 
 void BL_Protocol_Test(void)
 {
-    bool command_test;
-    bool data_test;
-    bool zero_length_test;
-    bool maximum_length_test;
-    bool crc_corruption_test;
-    bool invalid_sof_test;
-    bool invalid_length_test;
-    bool short_frame_test;
-    bool truncated_frame_test;
-    bool small_buffer_test;
-    bool invalid_command_test;
-    bool all_commands_test;
-    bool null_parameter_test;
+    bool test_result = true;
+
 
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "========================================"
     );
 
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "Protocol test started"
     );
 
     LOG_DEBUG(
-        LOG_MODULE_BOOTLOADER,
+        TEST_LOG_MODULE,
         "========================================"
     );
+
 
     /* ------------------------------------------------------------------------
      * Functional Tests
      * ---------------------------------------------------------------------- */
 
-    command_test =
-        BL_Protocol_Test_CommandPacket();
+#if BL_PROTOCOL_TEST_ENABLE_COMMAND
 
-    data_test =
-        BL_Protocol_Test_DataPacket();
+    if (!BL_Protocol_Test_CommandPacket())
+    {
+        test_result = false;
+    }
 
-    zero_length_test =
-        BL_Protocol_Test_ZeroLengthPacket();
+#endif
 
-    maximum_length_test =
-        BL_Protocol_Test_MaxLengthPacket();
 
-    all_commands_test =
-        BL_Protocol_Test_AllCommands();
+#if BL_PROTOCOL_TEST_ENABLE_DATA
 
-    invalid_command_test =
-        BL_Protocol_Test_InvalidCommand();
+    if (!BL_Protocol_Test_DataPacket())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_ZERO_LENGTH
+
+    if (!BL_Protocol_Test_ZeroLengthPacket())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_MAX_LENGTH
+
+    if (!BL_Protocol_Test_MaxLengthPacket())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_ALL_COMMANDS
+
+    if (!BL_Protocol_Test_AllCommands())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_INVALID_COMMAND
+
+    if (!BL_Protocol_Test_InvalidCommand())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_EXTRACT_COMMAND
+
+    if (!BL_Protocol_Test_ExtractCommand())
+    {
+        test_result = false;
+    }
+
+#endif
+
 
     /* ------------------------------------------------------------------------
      * Error Detection Tests
      * ---------------------------------------------------------------------- */
 
-    crc_corruption_test =
-        BL_Protocol_Test_CRCCorruption();
+#if BL_PROTOCOL_TEST_ENABLE_CRC
 
-    invalid_sof_test =
-        BL_Protocol_Test_InvalidSOF();
+    if (!BL_Protocol_Test_CRCCorruption())
+    {
+        test_result = false;
+    }
 
-    invalid_length_test =
-        BL_Protocol_Test_InvalidLength();
+#endif
 
-    short_frame_test =
-        BL_Protocol_Test_ShortFrame();
 
-    truncated_frame_test =
-        BL_Protocol_Test_TruncatedFrame();
+#if BL_PROTOCOL_TEST_ENABLE_INVALID_SOF
 
-    small_buffer_test =
-        BL_Protocol_Test_SmallBuffer();
+    if (!BL_Protocol_Test_InvalidSOF())
+    {
+        test_result = false;
+    }
 
-    null_parameter_test =
-        BL_Protocol_Test_NullParameters();
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_INVALID_LENGTH
+
+    if (!BL_Protocol_Test_InvalidLength())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_SHORT_FRAME
+
+    if (!BL_Protocol_Test_ShortFrame())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_TRUNCATED
+
+    if (!BL_Protocol_Test_TruncatedFrame())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_SMALL_BUFFER
+
+    if (!BL_Protocol_Test_SmallBuffer())
+    {
+        test_result = false;
+    }
+
+#endif
+
+
+#if BL_PROTOCOL_TEST_ENABLE_NULL_PARAMETER
+
+    if (!BL_Protocol_Test_NullParameters())
+    {
+        test_result = false;
+    }
+
+#endif
+
 
     /* ------------------------------------------------------------------------
      * Final Result
      * ---------------------------------------------------------------------- */
 
-    if (command_test &&
-        data_test &&
-        zero_length_test &&
-        maximum_length_test &&
-        all_commands_test &&
-        invalid_command_test &&
-        crc_corruption_test &&
-        invalid_sof_test &&
-        invalid_length_test &&
-        short_frame_test &&
-        truncated_frame_test &&
-        small_buffer_test &&
-        null_parameter_test)
+    if (test_result)
     {
         LOG_DEBUG(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "========================================"
         );
 
         LOG_DEBUG(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Protocol test PASSED"
         );
 
         LOG_DEBUG(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "========================================"
         );
     }
     else
     {
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "========================================"
         );
 
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "Protocol test FAILED"
         );
 
         LOG_ERROR(
-            LOG_MODULE_BOOTLOADER,
+            TEST_LOG_MODULE,
             "========================================"
         );
     }

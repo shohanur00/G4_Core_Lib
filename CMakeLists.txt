@@ -52,12 +52,15 @@ target_sources(${PROJECT_NAME} PRIVATE
   Bootloader/image/image.c
   Bootloader/image/image.h
   Bootloader/protocol/bl_protocol.c
-  Bootloader/transport/bootloader_uart.c
+  Bootloader/transport/uart/bootloader_uart.c
+  Bootloader/transport/bl_transport.c
   Drivers/uart/uart_driver.c 
   HAL/uart/uart_hal.c
   Bootloader/tests/bl_protocol_test.c
   Libraries/crc/crc.c
-  
+  Bootloader/transport/bl_transport.c
+  Bootloader/flash/bl_flash.c
+   
 )
 
 # Add include directories

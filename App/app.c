@@ -7,7 +7,7 @@
 #include "timecore/timecore.h"
 #include "logger/frontend/logger.h"
 #include "version.h"
-#include "transport/bootloader_uart.h"
+#include "transport/uart/bootloader_uart.h"
 #include "tests/bl_protocol_test.h"
 
 
