@@ -20,6 +20,13 @@
             "alignment": "left",
             "task": "Flash Program",
             "tooltip": "Flash the program to the connected STM32 device",
+        },
+
+        {
+            "label": "$(trash) Erase",
+            "alignment": "left",
+            "task": "Erase Flash",
+            "tooltip": "Erase the flash memory of the connected STM32 device",
         }
     ]
 }

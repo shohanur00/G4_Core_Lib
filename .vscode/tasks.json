@@ -13,6 +13,19 @@
                 "-rst"
             ],
             "problemMatcher": []
+        },
+        
+        {
+            "label": "Erase Flash",
+            "type": "shell",
+            "command": "STM32_Programmer_CLI",
+            "args": [
+                "-c",
+                "port=SWD",
+                "-e",
+                "all"
+            ],
+            "problemMatcher": []
         }
     ]
 }

@@ -1,141 +1,414 @@
-# Set the minimum version of CMake that can be used
+# =============================================================================
+# CMake Configuration
+# =============================================================================
+
 cmake_minimum_required(VERSION 3.20)
 
-# Enable compile command to ease indexing with e.g. clangd
+# -----------------------------------------------------------------------------
+# Build / Indexing
+# -----------------------------------------------------------------------------
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 set(CMAKE_C_COMPILER_FORCED TRUE)
 set(CMAKE_CXX_COMPILER_FORCED TRUE)
 
-# Set target definition variables required by the toolchain file
+
+# -----------------------------------------------------------------------------
+# Toolchain Configuration
+# -----------------------------------------------------------------------------
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/target.cmake)
 
-# Set the toolchain file for cross-compilation
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/gcc-arm-none-eabi.cmake)
 
-# Project definition
+
+# =============================================================================
+# Project Definition
+# =============================================================================
+
 project(G4_Core_Lib)
 
-# Enable CMake support for ASM and C/CPP languages
 enable_language(C ASM)
 
 set(PROJECT_NAME G4_Core_Lib)
 
-# Create an executable object type
 add_executable(${PROJECT_NAME})
 
 
-# Include additional CMake files for flags, components, and files
+# =============================================================================
+# Build Target Configuration
+#
+# BUILD_TARGET:
+#   FULL       -> Normal development build
+#   BOOTLOADER -> Bootloader build
+#   MAIN       -> Main firmware build
+# =============================================================================
+
+set(BUILD_TARGET "FULL" CACHE STRING "Firmware build target")
+
+set_property(CACHE BUILD_TARGET PROPERTY STRINGS
+    FULL
+    BOOTLOADER
+    MAIN
+)
+
+
+# -----------------------------------------------------------------------------
+# Select Firmware Target
+# -----------------------------------------------------------------------------
+
+if(BUILD_TARGET STREQUAL "BOOTLOADER")
+
+    set(BOOTLOADER_VALUE 1U)
+
+    set(FLASH_ORIGIN 0x08000000)
+    set(FLASH_LENGTH 16K)
+
+
+elseif(BUILD_TARGET STREQUAL "MAIN")
+
+    set(BOOTLOADER_VALUE 0U)
+
+    set(FLASH_ORIGIN 0x08004000)
+    set(FLASH_LENGTH 108K)
+
+
+else()
+
+    # FULL
+    # Normal development firmware
+
+    set(BOOTLOADER_VALUE 0U)
+
+    set(FLASH_ORIGIN 0x08000000)
+    set(FLASH_LENGTH 128K)
+
+endif()
+
+
+# =============================================================================
+# Build Information
+# =============================================================================
+
+message(STATUS "========================================")
+message(STATUS "Firmware Build Configuration")
+message(STATUS "========================================")
+message(STATUS "Build Type      : ${CMAKE_BUILD_TYPE}")
+message(STATUS "Build Target    : ${BUILD_TARGET}")
+message(STATUS "BOOTLOADER      : ${BOOTLOADER_VALUE}")
+message(STATUS "FLASH ORIGIN    : ${FLASH_ORIGIN}")
+message(STATUS "FLASH LENGTH    : ${FLASH_LENGTH}")
+message(STATUS "========================================")
+
+
+# =============================================================================
+# Project Components
+# =============================================================================
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/flags.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/components.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/files.cmake)
 
-# Add sources to executable/library
+
+# =============================================================================
+# Source Files
+# =============================================================================
+
 target_sources(${PROJECT_NAME} PRIVATE
-  # User defined sources
-  App/app.c
-  Drivers/gpio/gpio.c
-  Drivers/timecore/timecore.c
-  Drivers/timecore/timecore_hal.c
-  Services/debug/debug.c
-  Drivers/gpio/gpio_hal.c
-  Drivers/systemclock/systemclock.c
-  Services/logger/core/logger.c
-  Services/logger/core/logger_hal.c
-  Services/logger/backends/uart/logger_uart.c
-  Libraries/bit/bit.c
-  Libraries/math/mbasic.c
-  Libraries/containers/ringbuffer/ring_buffer.c
-  Libraries/math/map.c
-  Libraries/math/interpolation.c
-  Libraries/math/fixedpoint.c
-  Bootloader/core/bootloader.c
-  Bootloader/image/image.c
-  Bootloader/image/image.h
-  Bootloader/protocol/bl_protocol.c
-  Bootloader/transport/uart/bootloader_uart.c
-  Bootloader/transport/bl_transport.c
-  Drivers/uart/uart_driver.c 
-  HAL/uart/uart_hal.c
-  Bootloader/tests/bl_protocol_test.c
-  Libraries/crc/crc.c
-  Bootloader/transport/bl_transport.c
-  Bootloader/flash/bl_flash.c
-  Bootloader/tests/bl_flash_test.c
-   
+
+    # -------------------------------------------------------------------------
+    # Application
+    # -------------------------------------------------------------------------
+
+    App/app.c
+
+
+    # -------------------------------------------------------------------------
+    # Drivers
+    # -------------------------------------------------------------------------
+
+    Drivers/gpio/gpio.c
+    Drivers/gpio/gpio_hal.c
+
+    Drivers/timecore/timecore.c
+    Drivers/timecore/timecore_hal.c
+
+    Drivers/systemclock/systemclock.c
+
+    Drivers/uart/uart_driver.c
+
+
+    # -------------------------------------------------------------------------
+    # HAL
+    # -------------------------------------------------------------------------
+
+    HAL/uart/uart_hal.c
+
+
+    # -------------------------------------------------------------------------
+    # Services
+    # -------------------------------------------------------------------------
+
+    Services/debug/debug.c
+
+    Services/logger/core/logger.c
+    Services/logger/core/logger_hal.c
+
+    Services/logger/backends/uart/logger_uart.c
+
+
+    # -------------------------------------------------------------------------
+    # Libraries
+    # -------------------------------------------------------------------------
+
+    Libraries/bit/bit.c
+
+    Libraries/math/mbasic.c
+    Libraries/math/map.c
+    Libraries/math/interpolation.c
+    Libraries/math/fixedpoint.c
+
+    Libraries/containers/ringbuffer/ring_buffer.c
+
+    Libraries/crc/crc.c
+
+
+    # -------------------------------------------------------------------------
+    # Bootloader
+    # -------------------------------------------------------------------------
+
+    Bootloader/core/bootloader.c
+
+    Bootloader/image/image.c
+
+    Bootloader/protocol/bl_protocol.c
+
+    Bootloader/transport/bl_transport.c
+    Bootloader/transport/uart/bootloader_uart.c
+
+    Bootloader/flash/bl_flash.c
+
+
+    # -------------------------------------------------------------------------
+    # Tests
+    # -------------------------------------------------------------------------
+
+    Bootloader/tests/bl_protocol_test.c
+    Bootloader/tests/bl_flash_test.c
+
+
+    # -------------------------------------------------------------------------
+    # Firmware Version
+    # -------------------------------------------------------------------------
+
+    Version/version.c
 )
 
-# Add include directories
+
+# =============================================================================
+# Include Directories
+# =============================================================================
+
 target_include_directories(${PROJECT_NAME} PRIVATE
-  # User defined include directories
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS
-  ${CMAKE_CURRENT_SOURCE_DIR}/Version
-  ${CMAKE_CURRENT_SOURCE_DIR}/Drivers
-  ${CMAKE_CURRENT_SOURCE_DIR}/App
-  ${CMAKE_CURRENT_SOURCE_DIR}/BSP
-  ${CMAKE_CURRENT_SOURCE_DIR}/Services
-  ${CMAKE_CURRENT_SOURCE_DIR}/Services
-  ${CMAKE_CURRENT_SOURCE_DIR}/Config
-  ${CMAKE_CURRENT_SOURCE_DIR}/Libraries
-  ${CMAKE_CURRENT_SOURCE_DIR}/HAL
-  ${CMAKE_CURRENT_SOURCE_DIR}/Bootloader
-  ${CMAKE_BINARY_DIR}/generated
+
+    # -------------------------------------------------------------------------
+    # Core / CMSIS
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS
+
+
+    # -------------------------------------------------------------------------
+    # Application / Drivers
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/App
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers
+    ${CMAKE_CURRENT_SOURCE_DIR}/BSP
+
+
+    # -------------------------------------------------------------------------
+    # Services
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Services
+
+
+    # -------------------------------------------------------------------------
+    # Configuration
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config
+
+
+    # -------------------------------------------------------------------------
+    # Libraries
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Libraries
+
+
+    # -------------------------------------------------------------------------
+    # HAL
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/HAL
+
+
+    # -------------------------------------------------------------------------
+    # Bootloader
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Bootloader
+
+
+    # -------------------------------------------------------------------------
+    # Version
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Version
+
+    ${CMAKE_BINARY_DIR}/generated
 )
 
-# Compiler options
+
+# =============================================================================
+# Compiler Options
+# =============================================================================
+
 target_compile_options(${PROJECT_NAME} PRIVATE
-  # User defined compiler options
+
+    # User defined compiler options
+
 )
 
-# Add additional defined symbols
+
+# =============================================================================
+# Compiler Definitions
+# =============================================================================
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-  # Add additional defined symbols here
+
+    BOOTLOADER=${BOOTLOADER_VALUE}
+
 )
 
-# Linker options
-target_link_options(${PROJECT_NAME} PRIVATE 
-  # User defined linker options
+
+# =============================================================================
+# Linker Script Configuration
+#
+# One linker template is used for all configurations.
+# CMake generates the actual linker script inside the build directory.
+# =============================================================================
+
+set(LINKER_SCRIPT
+    ${CMAKE_CURRENT_SOURCE_DIR}/stm32g431xb_flash.ld
 )
 
-# Add additional linker search directories
+configure_file(
+    ${LINKER_SCRIPT}
+    ${CMAKE_BINARY_DIR}/stm32g431xb_flash.ld
+    @ONLY
+)
+
+
+# =============================================================================
+# Linker Options
+# =============================================================================
+
+target_link_options(${PROJECT_NAME} PRIVATE
+
+    "-T${CMAKE_BINARY_DIR}/stm32g431xb_flash.ld"
+
+)
+
+
+# =============================================================================
+# Linker Directories
+# =============================================================================
+
 target_link_directories(${PROJECT_NAME} PRIVATE
-  # Add additional linker search directories here
+
+    # User defined linker search directories
+
 )
 
-# Add additional linker libraries
+
+# =============================================================================
+# Linker Libraries
+# =============================================================================
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  # Add additional linker libraries here
+
+    # User defined linker libraries
+
 )
 
 
+# =============================================================================
+# Firmware Versioning
+#
+# Version format:
+#     Major.Minor.Build
+#
+# Example:
+#     1.0.15
+#
+# Major / Minor are manually defined.
+# Build number is automatically incremented on every build.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# Version Information
+# -----------------------------------------------------------------------------
 
-
-
-
-# ===========================================================================
-#   FIRMWARE VERSIONING
-#   Auto-incrementing A.B.C version scheme (Major.Minor manual, Build auto)
-# ===========================================================================
-
-# ---------------------------------------------------------------------------
-# 1. Version variables and paths
-# ---------------------------------------------------------------------------
 set(FW_VERSION_MAJOR 1)
 set(FW_VERSION_MINOR 0)
 
-set(VERSION_DIR              ${CMAKE_SOURCE_DIR}/Version)
-set(VERSION_STATE_FILE       ${VERSION_DIR}/version_state.txt)
-set(VERSION_TEMPLATE         ${VERSION_DIR}/version_config.h.in)
-set(VERSION_GENERATED_DIR    ${CMAKE_BINARY_DIR}/generated)
-set(VERSION_GENERATED_HEADER ${VERSION_GENERATED_DIR}/version_config.h)
 
-file(MAKE_DIRECTORY ${VERSION_GENERATED_DIR})
+# -----------------------------------------------------------------------------
+# Version Paths
+# -----------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# 2. Custom target that regenerates the version header on every build
-#    (no tracked OUTPUT -> always re-runs, not just on CMake reconfigure)
-# ---------------------------------------------------------------------------
+set(VERSION_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/Version
+)
+
+set(VERSION_STATE_FILE
+    ${VERSION_DIR}/version_state.txt
+)
+
+set(VERSION_TEMPLATE
+    ${VERSION_DIR}/version_config.h.in
+)
+
+set(VERSION_GENERATED_DIR
+    ${CMAKE_BINARY_DIR}/generated
+)
+
+set(VERSION_GENERATED_HEADER
+    ${VERSION_GENERATED_DIR}/version_config.h
+)
+
+
+# -----------------------------------------------------------------------------
+# Generated Directory
+# -----------------------------------------------------------------------------
+
+file(MAKE_DIRECTORY
+    ${VERSION_GENERATED_DIR}
+)
+
+
+# -----------------------------------------------------------------------------
+# Version Generation
+#
+# This target runs on every build and increments the build number.
+# -----------------------------------------------------------------------------
+
 add_custom_target(GenerateVersion ALL
+
     COMMAND ${CMAKE_COMMAND}
         -DFW_VERSION_MAJOR=${FW_VERSION_MAJOR}
         -DFW_VERSION_MINOR=${FW_VERSION_MINOR}
@@ -143,30 +416,36 @@ add_custom_target(GenerateVersion ALL
         -DTEMPLATE_FILE=${VERSION_TEMPLATE}
         -DOUTPUT_FILE=${VERSION_GENERATED_HEADER}
         -P ${VERSION_DIR}/generate_version.cmake
-    BYPRODUCTS ${VERSION_GENERATED_HEADER}
-    COMMENT "Bumping firmware build number"
+
+    BYPRODUCTS
+        ${VERSION_GENERATED_HEADER}
+
+    COMMENT
+        "Generating firmware version"
+
     VERBATIM
 )
 
-# ---------------------------------------------------------------------------
-# 3. Main executable target
-#    (already declared earlier in this file — must exist before this point)
-# ---------------------------------------------------------------------------
-# add_executable(${PROJECT_NAME})
 
-# ---------------------------------------------------------------------------
-# 4. Add version.c to the existing source list
-# ---------------------------------------------------------------------------
-target_sources(${PROJECT_NAME} PRIVATE
-    Version/version.c
-    # ... rest of your existing sources (Src/, App/, Drivers/, BSP/, Services/, etc.)
-)
+# -----------------------------------------------------------------------------
+# Version Include Directories
+# -----------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# 5. Version-related include paths and build dependency
-# ---------------------------------------------------------------------------
 target_include_directories(${PROJECT_NAME} PRIVATE
+
     ${VERSION_DIR}
     ${VERSION_GENERATED_DIR}
+
 )
-add_dependencies(${PROJECT_NAME} GenerateVersion)
+
+
+# -----------------------------------------------------------------------------
+# Version Build Dependency
+#
+# GenerateVersion must run before the firmware is compiled.
+# -----------------------------------------------------------------------------
+
+add_dependencies(
+    ${PROJECT_NAME}
+    GenerateVersion
+)
