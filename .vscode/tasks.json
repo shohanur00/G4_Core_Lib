@@ -9,11 +9,10 @@
                 "-c",
                 "port=SWD",
                 "-w",
-                "${workspaceFolder}/build/${command:cmake.buildType}/${workspaceFolderBasename}.elf",
+                "${command:cmake.launchTargetPath}",
                 "-rst"
             ],
+            "problemMatcher": []
         }
-    ],
-    
+    ]
 }
-

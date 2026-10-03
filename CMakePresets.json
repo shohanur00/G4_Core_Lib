@@ -1,5 +1,6 @@
 {
     "version": 3,
+
     "configurePresets": [
         {
             "name": "default",
@@ -7,29 +8,91 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}"
         },
+
         {
             "name": "Debug",
             "inherits": "default",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TARGET": "FULL"
             }
         },
+
         {
             "name": "Release",
             "inherits": "default",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_TARGET": "FULL"
+            }
+        },
+
+        {
+            "name": "Debug-Bootloader",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TARGET": "BOOTLOADER"
+            }
+        },
+
+        {
+            "name": "Release-Bootloader",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_TARGET": "BOOTLOADER"
+            }
+        },
+
+        {
+            "name": "Debug-Main",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TARGET": "MAIN"
+            }
+        },
+
+        {
+            "name": "Release-Main",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_TARGET": "MAIN"
             }
         }
     ],
+
     "buildPresets": [
         {
             "name": "Debug",
             "configurePreset": "Debug"
         },
+
         {
             "name": "Release",
             "configurePreset": "Release"
+        },
+
+        {
+            "name": "Debug-Bootloader",
+            "configurePreset": "Debug-Bootloader"
+        },
+
+        {
+            "name": "Release-Bootloader",
+            "configurePreset": "Release-Bootloader"
+        },
+
+        {
+            "name": "Debug-Main",
+            "configurePreset": "Debug-Main"
+        },
+
+        {
+            "name": "Release-Main",
+            "configurePreset": "Release-Main"
         }
     ]
 }
