@@ -215,6 +215,28 @@ void GPIO_Init(void)
     }
 }
 
+void GPIO_DeInit(void)
+{
+    /* Deinitialize all configured pins first */
+    for (uint32_t i = 0U; i < GPIO_INIT_TABLE_COUNT; i++)
+    {
+        GPIO_HAL_Pin_t pin =
+            GPIO_GetPin(gpio_init_table[i].name);
+
+        GPIO_HAL_DeInit(pin);
+    }
+
+    /* Disable clocks after all pins are deinitialized */
+    for (uint32_t i = 0U; i < GPIO_INIT_TABLE_COUNT; i++)
+    {
+        GPIO_HAL_Pin_t pin =
+            GPIO_GetPin(gpio_init_table[i].name);
+
+        GPIO_HAL_DisableClock(pin);
+    }
+}
+
+
 void GPIO_Write(GPIO_Name_t name, GPIO_State_t state)
 {
     GPIO_HAL_Pin_t pin = GPIO_GetPin(name);

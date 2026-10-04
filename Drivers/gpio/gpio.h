@@ -195,6 +195,7 @@ typedef enum
  * ============================================================ */
 
 void GPIO_Init(void);
+void GPIO_DeInit(void);
 
 void GPIO_Write(GPIO_Name_t name, GPIO_State_t state);
 

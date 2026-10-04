@@ -62,6 +62,18 @@ static void GPIO_HAL_EnableClock(GPIO_TypeDef *port)
 }
 
 
+
+
+static void GPIO_HAL_DisableAlternateFunction(GPIO_HAL_Pin_t pin)
+{
+    GPIO_TypeDef *GPIOx = pin.port;
+    uint32_t position = pin.pin;
+
+    GPIOx->MODER &= ~(3UL << (position * 2U));
+
+}
+
+
 /* ============================================================
  * Mode
  *
@@ -80,6 +92,42 @@ void GPIO_HAL_SetMode(GPIO_HAL_Pin_t pin, GPIO_HAL_Mode_t mode)
     pin.port->MODER &= ~(3UL << position);
     pin.port->MODER |= ((uint32_t)mode << position);
 }
+
+
+void GPIO_HAL_DisableClock(GPIO_HAL_Pin_t pin)
+{
+    if (pin.port == NULL)
+    {
+        return;
+    }
+
+    if (pin.port == GPIOA)
+    {
+        RCC->AHB2ENR &= ~RCC_AHB2ENR_GPIOAEN;
+    }
+    else if (pin.port == GPIOB)
+    {
+        RCC->AHB2ENR &= ~RCC_AHB2ENR_GPIOBEN;
+    }
+    else if (pin.port == GPIOC)
+    {
+        RCC->AHB2ENR &= ~RCC_AHB2ENR_GPIOCEN;
+    }
+    else if (pin.port == GPIOD)
+    {
+        RCC->AHB2ENR &= ~RCC_AHB2ENR_GPIODEN;
+    }
+    else if (pin.port == GPIOE)
+    {
+        RCC->AHB2ENR &= ~RCC_AHB2ENR_GPIOEEN;
+    }
+    else if (pin.port == GPIOF)
+    {
+        RCC->AHB2ENR &= ~RCC_AHB2ENR_GPIOFEN;
+    }
+}
+
+
 
 
 /* ============================================================
@@ -257,6 +305,17 @@ void GPIO_HAL_Init(const GPIO_HAL_Config_t *config)
     }
 
     GPIO_HAL_SetMode(config->pin, config->mode);
+}
+
+
+
+void GPIO_HAL_DeInit(GPIO_HAL_Pin_t pin)
+{
+    GPIO_HAL_SetMode(pin, GPIO_HAL_MODE_ANALOG);
+    GPIO_HAL_SetPull(pin, GPIO_HAL_PULL_NONE);
+    GPIO_HAL_SetSpeed(pin, GPIO_HAL_SPEED_LOW);
+    GPIO_HAL_SetOutputType(pin, GPIO_HAL_OUTPUT_PUSH_PULL);
+
 }
 
 

@@ -170,6 +170,10 @@ typedef struct
 void GPIO_HAL_Init(const GPIO_HAL_Config_t *config);
 
 
+void GPIO_HAL_DeInit(GPIO_HAL_Pin_t pin);
+
+void GPIO_HAL_DisableClock(GPIO_HAL_Pin_t pin);
+
 /* ============================================================
  * Digital Output
  * ============================================================ */

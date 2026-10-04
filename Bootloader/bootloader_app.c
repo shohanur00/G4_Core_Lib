@@ -6,7 +6,7 @@
 #include "timecore/timecore.h"
 #include "transport/uart/bootloader_uart.h"
 // #include "tests/bl_protocol_test.h"
-// #include "tests/bl_flash_test.h"
+#include "tests/bl_flash_test.h"
 #include "logger/frontend/logger.h"
 // #include "version.h"
 
@@ -35,8 +35,8 @@ void Bootloader_App_Loop(void)
     {
         GPIO_Toggle(GPIO_LED); // Toggle the LED state
         //BL_Protocol_Test();
-        //BL_Flash_Test();
-        // LOG_Disable();     
+        BL_Flash_Test();
+        LOG_Disable();     
     }
 
     TimeCore_MainLoop(); // Call the main loop function for time-based tasks

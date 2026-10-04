@@ -178,6 +178,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     # -------------------------------------------------------------------------
 
     Version/version.c
+    Bootloader/jump/bl_jump.c
 
 )
 
