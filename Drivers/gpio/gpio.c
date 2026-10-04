@@ -81,10 +81,15 @@ static const GPIO_InitEntry_t gpio_init_table[] =
 
 static const GPIO_HAL_Pin_t gpio_map[GPIO_COUNT] =
 {
-    [GPIO_LED] = { .port = LED_PORT, .pin = LED_PIN },      //LED_PORT and LED_PIN are defined in board.h
-    [LOG_UART_TX] = { .port = LOG_UART_TX_PORT, .pin = LOG_UART_TX_PIN },
-    [BOOTLOADER_UART_RX] = { .port = BOOTLOADER_UART_RX_PORT, .pin = BOOTLOADER_UART_RX_PIN },
-    [BOOTLOADER_UART_TX] = { .port = BOOTLOADER_UART_TX_PORT, .pin = BOOTLOADER_UART_TX_PIN },
+    #if BOOTLOADER == 1U
+        [GPIO_LED] = { .port = LED_PORT, .pin = LED_PIN },      //LED_PORT and LED_PIN are defined in board.h
+        [LOG_UART_TX] = { .port = LOG_UART_TX_PORT, .pin = LOG_UART_TX_PIN },
+        [BOOTLOADER_UART_RX] = { .port = BOOTLOADER_UART_RX_PORT, .pin = BOOTLOADER_UART_RX_PIN },
+        [BOOTLOADER_UART_TX] = { .port = BOOTLOADER_UART_TX_PORT, .pin = BOOTLOADER_UART_TX_PIN },
+    #else
+        [GPIO_LED] = { .port = LED_PORT, .pin = LED_PIN },      //LED_PORT and LED_PIN are defined in board.h
+        [LOG_UART_TX] = { .port = LOG_UART_TX_PORT, .pin = LOG_UART_TX_PIN },
+    #endif
 };
 
 #pragma USER END

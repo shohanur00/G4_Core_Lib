@@ -173,6 +173,19 @@ target_sources(${PROJECT_NAME} PRIVATE
 
     Libraries/crc/crc.c
 
+    # -------------------------------------------------------------------------
+    # Firmware Version
+    # -------------------------------------------------------------------------
+
+    Version/version.c
+
+)
+
+
+
+if(BOOTLOADER_VALUE EQUAL 1)
+
+    target_sources(${PROJECT_NAME} PRIVATE
 
     # -------------------------------------------------------------------------
     # Bootloader
@@ -188,6 +201,8 @@ target_sources(${PROJECT_NAME} PRIVATE
     Bootloader/transport/uart/bootloader_uart.c
 
     Bootloader/flash/bl_flash.c
+    
+    Bootloader/bootloader_app.c
 
 
     # -------------------------------------------------------------------------
@@ -197,13 +212,22 @@ target_sources(${PROJECT_NAME} PRIVATE
     Bootloader/tests/bl_protocol_test.c
     Bootloader/tests/bl_flash_test.c
 
+    )
+
+else()
+
+    target_sources(${PROJECT_NAME} PRIVATE
 
     # -------------------------------------------------------------------------
-    # Firmware Version
+    # Firmware
     # -------------------------------------------------------------------------
 
-    Version/version.c
-)
+    Firmware/firmware.c
+
+    )
+
+endif()
+
 
 
 # =============================================================================
@@ -262,6 +286,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
     ${CMAKE_CURRENT_SOURCE_DIR}/Bootloader
 
+
+    # -------------------------------------------------------------------------
+    # Firmware
+    # -------------------------------------------------------------------------
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/Firmware
 
     # -------------------------------------------------------------------------
     # Version
