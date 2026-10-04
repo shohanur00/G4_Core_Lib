@@ -176,6 +176,20 @@ typedef enum
 void LOG_Init(void);
 
 
+
+/**
+ * @brief Deinitialize the logging module.
+ *
+ * Deinitializes the logger state and the underlying logging
+ * hardware abstraction layer (HAL).
+ *
+ * This function should be called when logging is no longer
+ * needed, or before system shutdown.
+ */
+
+
+void LOG_Deinit(void);
+
 /**
  * @brief Configure the minimum logging level for a module.
  *

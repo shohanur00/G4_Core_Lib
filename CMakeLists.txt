@@ -395,7 +395,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # -----------------------------------------------------------------------------
 
 set(FW_VERSION_MAJOR 1)
-set(FW_VERSION_MINOR 0)
+set(FW_VERSION_MINOR 1)
 
 
 # -----------------------------------------------------------------------------

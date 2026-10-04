@@ -39,6 +39,17 @@ extern "C" {
  */
 void LOG_UART_Init(void);
 
+
+
+/**
+ * @brief Deinitialize the UART logging backend.
+ *
+ * Deinitializes the UART peripheral used by the Logger,
+ * releasing any resources allocated during initialization.
+ */
+void LOG_UART_Deinit(void);
+
+
 /**
  * @brief Write log data through the UART backend.
  *

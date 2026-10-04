@@ -39,6 +39,26 @@ void LOG_HAL_Init(void)
 }
 
 
+void LOG_HAL_Deinit(void)
+{
+    #if LOG_USE_UART
+        LOG_UART_Deinit();
+    #endif
+
+    #if LOG_USE_FLASH
+        LOG_FLASH_Deinit();
+    #endif
+
+    #if LOG_USE_USB
+        LOG_USB_Deinit();
+    #endif
+
+    #if LOG_USE_RTT
+        LOG_RTT_Deinit();
+    #endif
+}
+
+
 void LOG_HAL_Write(
     const char *buffer,
     size_t length

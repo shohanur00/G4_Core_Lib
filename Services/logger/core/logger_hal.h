@@ -55,6 +55,22 @@ void LOG_HAL_Init(void);
 
 
 /**
+ * @brief Deinitialize the Logger Hardware Abstraction Layer.
+ *
+ * Deinitializes all logging backends enabled through the
+ * LOG_HAL_USE_* configuration macros.
+ *
+ * Each enabled backend is responsible for deinitializing its
+ * own hardware or software resources.
+ *
+ * @note This function should be called when logging is no longer
+ *       needed, or before system shutdown.
+ */
+
+void LOG_HAL_Deinit(void);
+
+
+/**
  * @brief Write log data to all enabled logging backends.
  *
  * The Logger HAL forwards the provided log buffer to every

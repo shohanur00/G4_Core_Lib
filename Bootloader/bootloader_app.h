@@ -9,6 +9,7 @@ extern "C" {
  * Bootloader Application
  * -------------------------------------------------------------------------- */
 
+void Bootloader_App_Deinit(void);
 void Bootloader_App_Setup(void);
 void Bootloader_App_Loop(void);
 

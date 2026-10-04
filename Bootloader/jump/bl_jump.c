@@ -3,12 +3,19 @@
 #include "stm32g431xx.h"
 #include "../flash/bl_flash_config.h"
 
+
 /* --------------------------------------------------------------------------
  * Private Definitions
  * -------------------------------------------------------------------------- */
 
-#define BL_APP_STACK_POINTER_OFFSET    0x00U
-#define BL_APP_RESET_HANDLER_OFFSET    0x04U
+#define BL_APP_STACK_POINTER_OFFSET     (0x00U)
+#define BL_APP_RESET_HANDLER_OFFSET     (0x04U)
+
+#define BL_SRAM_START_ADDRESS            (0x20000000UL)
+#define BL_SRAM_SIZE                     (32UL * 1024UL)
+
+#define BL_SRAM_END_ADDRESS              \
+    (BL_SRAM_START_ADDRESS + BL_SRAM_SIZE - 1UL)
 
 
 /* --------------------------------------------------------------------------
@@ -19,6 +26,7 @@ uint8_t BL_Jump_IsApplicationValid(void)
 {
     uint32_t stack_pointer;
     uint32_t reset_handler;
+
 
     /*
      * Application Vector Table
@@ -36,16 +44,20 @@ uint8_t BL_Jump_IsApplicationValid(void)
                                BL_APP_RESET_HANDLER_OFFSET);
 
 
-    /* Check SRAM address */
+    /* ----------------------------------------------------------------------
+     * Validate Initial Stack Pointer
+     * ------------------------------------------------------------------ */
 
-    if ((stack_pointer < SRAM_BASE) ||
-        (stack_pointer >= (SRAM_BASE + SRAM_SIZE)))
+    if ((stack_pointer < BL_SRAM_START_ADDRESS) ||
+        (stack_pointer > (BL_SRAM_END_ADDRESS + 1UL)))
     {
         return 0U;
     }
 
 
-    /* Reset_Handler must be Thumb address */
+    /* ----------------------------------------------------------------------
+     * Reset_Handler must be a Thumb address
+     * ------------------------------------------------------------------ */
 
     if ((reset_handler & 0x01U) == 0U)
     {
@@ -53,10 +65,14 @@ uint8_t BL_Jump_IsApplicationValid(void)
     }
 
 
-    /* Check Reset_Handler is inside Flash */
+    /* ----------------------------------------------------------------------
+     * Validate Reset_Handler address
+     *
+     * BL_APP_END_ADDRESS is inclusive.
+     * ------------------------------------------------------------------ */
 
     if ((reset_handler < BL_APP_START_ADDRESS) ||
-        (reset_handler >= (FLASH_BASE + FLASH_SIZE)))
+        (reset_handler > BL_APP_END_ADDRESS))
     {
         return 0U;
     }
@@ -78,36 +94,48 @@ void BL_Jump_ToApplication(void)
     void (*app_reset_handler_function)(void);
 
 
-    /*
+    /* ----------------------------------------------------------------------
+     * Validate Application
+     * ------------------------------------------------------------------ */
+
+    if (BL_Jump_IsApplicationValid() == 0U)
+    {
+        return;
+    }
+
+
+    /* ----------------------------------------------------------------------
      * Read Application Vector Table
-     */
+     * ------------------------------------------------------------------ */
 
     app_stack_pointer =
-        *(volatile uint32_t *)(BL_APP_START_ADDRESS + 0x00U);
+        *(volatile uint32_t *)(BL_APP_START_ADDRESS +
+                               BL_APP_STACK_POINTER_OFFSET);
 
     app_reset_handler =
-        *(volatile uint32_t *)(BL_APP_START_ADDRESS + 0x04U);
+        *(volatile uint32_t *)(BL_APP_START_ADDRESS +
+                               BL_APP_RESET_HANDLER_OFFSET);
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Disable Global Interrupts
-     */
+     * ------------------------------------------------------------------ */
 
-    __disable_irq();
+    // __disable_irq();
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Disable SysTick
-     */
+     * ------------------------------------------------------------------ */
 
     SysTick->CTRL = 0U;
     SysTick->LOAD = 0U;
     SysTick->VAL  = 0U;
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Disable NVIC Interrupts
-     */
+     * ------------------------------------------------------------------ */
 
     for (uint32_t i = 0U;
          i < (sizeof(NVIC->ICER) / sizeof(NVIC->ICER[0]));
@@ -118,22 +146,22 @@ void BL_Jump_ToApplication(void)
     }
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Bootloader Peripheral DeInit
      *
-     * Add your peripheral deinitialization here.
+     * Add bootloader peripheral deinitialization here.
      *
      * Example:
      *
      * Bootloader_UART_DeInit();
      * GPIO_DeInit();
      *
-     */
+     * ------------------------------------------------------------------ */
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Relocate Vector Table
-     */
+     * ------------------------------------------------------------------ */
 
     SCB->VTOR = BL_APP_START_ADDRESS;
 
@@ -141,9 +169,9 @@ void BL_Jump_ToApplication(void)
     __ISB();
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Set Application Main Stack Pointer
-     */
+     * ------------------------------------------------------------------ */
 
     __set_MSP(app_stack_pointer);
 
@@ -151,24 +179,24 @@ void BL_Jump_ToApplication(void)
     __ISB();
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Get Application Reset Handler
-     */
+     * ------------------------------------------------------------------ */
 
     app_reset_handler_function =
         (void (*)(void))app_reset_handler;
 
 
-    /*
-     * Jump To Application
-     */
+    /* ----------------------------------------------------------------------
+     * Jump To Application Reset Handler
+     * ------------------------------------------------------------------ */
 
     app_reset_handler_function();
 
 
-    /*
+    /* ----------------------------------------------------------------------
      * Should Never Return
-     */
+     * ------------------------------------------------------------------ */
 
     while (1)
     {

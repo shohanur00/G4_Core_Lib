@@ -288,6 +288,11 @@ void LOG_Init(void){
 }
 
 
+void LOG_Deinit(void) {
+    // Deinitialize the logger hardware abstraction layer (HAL)
+    LOG_HAL_Deinit();
+}
+
 void LOG_Enable(void) { 
     
     log_state.enabled = 1U; 

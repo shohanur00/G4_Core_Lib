@@ -28,7 +28,9 @@ static USART_TypeDef *LOG_UART_GetInstance(void)
         return LPUART1;
 
     #else
-    #warning "LOG IS DISABLED!"
+        
+        #error "LOG UART instance is not defined or unsupported. Please define LOG_UART_INSTANCE to a valid UART instance (1-6)."
+
     #endif
 }
 
@@ -58,6 +60,39 @@ static void LOG_UART_ClockEnable(void)
     #elif LOG_UART_INSTANCE == 6U
 
         RCC->APB1ENR1 |= RCC_APB1ENR1_LPUART1EN;
+
+    #else
+
+        #error "LOG UART instance is not defined or unsupported. Please define LOG_UART_INSTANCE to a valid UART instance (1-6)."
+
+    #endif
+}
+
+static void LOG_UART_ClockDisable(void)
+{
+    #if LOG_UART_INSTANCE == 1U
+
+        RCC->APB2ENR &= ~RCC_APB2ENR_USART1EN;
+
+    #elif LOG_UART_INSTANCE == 2U
+
+        RCC->APB1ENR1 &= ~RCC_APB1ENR1_USART2EN;
+
+    #elif LOG_UART_INSTANCE == 3U
+
+        RCC->APB1ENR1 &= ~RCC_APB1ENR1_USART3EN;
+
+    #elif LOG_UART_INSTANCE == 4U
+
+        RCC->APB1ENR1 &= ~RCC_APB1ENR1_UART4EN;
+
+    #elif LOG_UART_INSTANCE == 5U
+
+        RCC->APB1ENR1 &= ~RCC_APB1ENR1_UART5EN;
+
+    #elif LOG_UART_INSTANCE == 6U
+
+        RCC->APB1ENR1 &= ~RCC_APB1ENR1_LPUART1EN;
 
     #else
 
@@ -144,6 +179,17 @@ void LOG_UART_Init(void)
     LOG_UART_ClockEnable();
     LOG_UART_Config();
 
+}
+
+
+void LOG_UART_Deinit(void)
+{
+    // Deinitialize UART hardware here
+    USART_TypeDef *uart = LOG_UART_GetInstance();
+
+    uart->CR1 &= ~USART_CR1_UE; // Disable UART
+    LOG_UART_ClockDisable();
+    // Optionally, disable the UART clock if needed
 }
 
 
