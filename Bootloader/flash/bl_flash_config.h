@@ -32,8 +32,7 @@
 #define BL_APP_START_ADDRESS            (0x08004000UL)
 #define BL_APP_SIZE                     (108UL * 1024UL)
 
-#define BL_APP_END_ADDRESS              \
-    (BL_APP_START_ADDRESS + BL_APP_SIZE - 1UL)
+#define BL_APP_END_ADDRESS              (BL_APP_START_ADDRESS + BL_APP_SIZE - 1UL)
 
 
 /* ============================================================================
@@ -43,8 +42,7 @@
 #define BL_DATA_START_ADDRESS           (0x0801F000UL)
 #define BL_DATA_SIZE                    (4UL * 1024UL)
 
-#define BL_DATA_END_ADDRESS             \
-    (BL_DATA_START_ADDRESS + BL_DATA_SIZE - 1UL)
+#define BL_DATA_END_ADDRESS             (BL_DATA_START_ADDRESS + BL_DATA_SIZE - 1UL)
 
 
 #endif /* BL_FLASH_CONFIG_H */

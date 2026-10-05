@@ -40,16 +40,11 @@ void Firmware_Setup(void)
 void Firmware_Loop(void)
 {
     /* Firmware main loop */
-    // LOG_INFO(LOG_MODULE_SYSTEM,"MAIN_LOOP_STARTED!");
+    
     if(TimeCore_ContinousExpiredEvent(LED_timer))
     {
         GPIO_Toggle(GPIO_LED); // Toggle the LED state
-        // LOG_INFO(LOG_MODULE_SYSTEM,"Timer Working!");
-        // LOG_DEBUG(LOG_MODULE_SYSTEM,"Current: %d",20);
-        // LOG_INFO(LOG_MODULE_SYSTEM,"SYSTEM %s","INIT");
-        // LOG_WARNING(LOG_MODULE_SYSTEM,"WARNING!");
-        // LOG_ERROR(LOG_MODULE_SYSTEM,"OVER Temperature!");
-        // LOG_CRITICAL(LOG_MODULE_SYSTEM,"System Failure!");
+        LOG_INFO(LOG_MODULE_SYSTEM,"Firmware Running..."); // Log a message indicating that the firmware is running
         // LOG_Disable();   
     }
 

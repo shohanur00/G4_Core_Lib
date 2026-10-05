@@ -8,14 +8,13 @@
  * Private Definitions
  * -------------------------------------------------------------------------- */
 
-#define BL_APP_STACK_POINTER_OFFSET     (0x00U)
-#define BL_APP_RESET_HANDLER_OFFSET     (0x04U)
+#define BL_APP_STACK_POINTER_OFFSET      (0x00U)
+#define BL_APP_RESET_HANDLER_OFFSET      (0x04U)
 
 #define BL_SRAM_START_ADDRESS            (0x20000000UL)
 #define BL_SRAM_SIZE                     (32UL * 1024UL)
 
-#define BL_SRAM_END_ADDRESS              \
-    (BL_SRAM_START_ADDRESS + BL_SRAM_SIZE - 1UL)
+#define BL_SRAM_END_ADDRESS              (BL_SRAM_START_ADDRESS + BL_SRAM_SIZE - 1UL)
 
 
 /* --------------------------------------------------------------------------
