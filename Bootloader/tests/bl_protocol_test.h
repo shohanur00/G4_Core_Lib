@@ -68,8 +68,8 @@ extern "C" {
     BL_CMD_FW_UPDATE_RES,                       \
     BL_CMD_DEVICE_ID_REQ,                       \
     BL_CMD_DEVICE_ID_RES,                       \
-    BL_CMD_FW_LENGTH_REQ,                       \
-    BL_CMD_FW_LENGTH_RES,                       \
+    BL_CMD_FW_SIZE,                             \
+    BL_CMD_FW_OVER_SIZE,                        \
     BL_CMD_READY_FOR_DATA,                      \
     BL_CMD_UPDATE_SUCCESSFUL,                   \
     BL_CMD_ACK,                                 \
