@@ -7,6 +7,7 @@
 
 static BL_Protocol_Parser_t protocol_parser;
 static BL_Protocol_Packet_t packet;
+static BL_State_t bl_state = BL_STATE_WAIT_SYNC;
 
 
 void Bootloader_Init(void)
@@ -110,6 +111,7 @@ static void Bootloader_ProcessPacket(
         case BL_CMD_SYNC_OBSERVED:
             /* Handle SYNC */
             Bootloader_SendACK();
+            bl_state = BL_STATE_CONNECTED;
             break;
 
 

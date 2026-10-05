@@ -63,9 +63,9 @@ void Bootloader_App_Loop(void)
             "Jumping to Application!"
         );
 
-        Bootloader_App_Deinit();
+        // Bootloader_App_Deinit();
 
-        BL_Jump_ToApplication();
+        // BL_Jump_ToApplication();
     }
 
 

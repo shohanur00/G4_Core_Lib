@@ -277,7 +277,37 @@ void BL_Protocol_CreateDataPacket(
     uint8_t               length
 );
 
-/*
+
+
+/**
+ * @brief Create a command packet with payload data.
+ *
+ * Creates a packet with:
+ *
+ *     SOF     = BL_PROTOCOL_SOF
+ *     TYPE    = BL_PACKET_TYPE_COMMAND
+ *     COMMAND = specified command
+ *     DATA    = specified payload
+ *
+ * LENGTH = TYPE + COMMAND + DATA
+ *
+ * @param packet   Output packet.
+ * @param command  Command to encode.
+ * @param data     Payload data.
+ * @param length   Payload data length.
+ *
+ * @return true if packet creation succeeds,
+ *         otherwise false.
+ */
+bool BL_Protocol_CreateCommandDataPacket(
+    BL_Protocol_Packet_t *packet,
+    BL_Command_t          command,
+    const uint8_t         *data,
+    uint8_t               length
+);
+
+
+/**
  * @brief Extract data from a data packet.
  *
  * @param packet   Data packet.

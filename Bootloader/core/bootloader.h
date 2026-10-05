@@ -6,6 +6,17 @@
 extern "C" {
 #endif
 
+
+typedef enum
+{
+    BL_STATE_WAIT_SYNC = 0,
+    BL_STATE_CONNECTED,
+    BL_STATE_WAIT_FW_LENGTH,
+    BL_STATE_READY,
+    BL_STATE_RECEIVING
+} BL_State_t;
+
+
 /* --------------------------------------------------------------------------
  * Bootloader Public API
  * -------------------------------------------------------------------------- */

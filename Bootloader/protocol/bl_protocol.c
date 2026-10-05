@@ -579,3 +579,60 @@ bool BL_Protocol_Parser_PushByte(
 
     return false;
 }
+
+
+
+bool BL_Protocol_CreateCommandDataPacket(
+    BL_Protocol_Packet_t *packet,
+    BL_Command_t          command,
+    const uint8_t        *data,
+    uint8_t               length
+)
+{
+    if (packet == NULL)
+    {
+        return false;
+    }
+
+    if ((data == NULL) && (length > 0U))
+    {
+        return false;
+    }
+
+    if (length > BL_PROTOCOL_MAX_DATA_SIZE)
+    {
+        return false;
+    }
+
+    packet->sof     = BL_PROTOCOL_SOF;
+    packet->type    = BL_PACKET_TYPE_COMMAND;
+    packet->command = (uint8_t)command;
+
+    /*
+     * LENGTH:
+     *
+     * TYPE + COMMAND + DATA
+     * = 2 + DATA length
+     */
+    packet->length =
+        (uint8_t)(BL_PROTOCOL_FIXED_DATA_SIZE + length);
+
+    /*
+     * Copy payload data.
+     */
+    for (uint8_t i = 0U; i < length; i++)
+    {
+        packet->data[i] = data[i];
+    }
+
+    /*
+     * Calculate CRC over:
+     *
+     * LENGTH + TYPE + COMMAND + DATA
+     */
+    packet->crc =
+        BL_Protocol_ComputeCRC(packet);
+
+    return true;
+}
+
