@@ -96,8 +96,8 @@ typedef enum
     BL_CMD_DEVICE_ID_REQ     = 0x3CU,
     BL_CMD_DEVICE_ID_RES     = 0x3FU,
 
-    BL_CMD_FW_LENGTH_REQ     = 0x42U,
-    BL_CMD_FW_LENGTH_RES     = 0x45U,
+    BL_CMD_FW_SIZE           = 0x42U,
+    BL_CMD_FW_OVER_SIZE      = 0x45U,
 
     BL_CMD_READY_FOR_DATA    = 0x48U,
 

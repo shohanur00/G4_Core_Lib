@@ -392,11 +392,6 @@ bool BL_Protocol_ExtractData(
         return false;
     }
 
-    if (packet->type != BL_PACKET_TYPE_DATA)
-    {
-        return false;
-    }
-
     if (packet->length < BL_PROTOCOL_MIN_LENGTH)
     {
         return false;
