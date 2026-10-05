@@ -295,32 +295,25 @@ bool BL_Protocol_ExtractCommand(
  * Create Command Packet
  * ========================================================================== */
 
-void BL_Protocol_CreateCommandPacket(
+bool BL_Protocol_CreateCommandPacket(
     BL_Protocol_Packet_t *packet,
     BL_Command_t          command
 )
 {
     if (packet == NULL)
     {
-        return;
+        return false;
     }
 
     packet->sof     = BL_PROTOCOL_SOF;
+    packet->length  = BL_PROTOCOL_FIXED_DATA_SIZE;
     packet->type    = BL_PACKET_TYPE_COMMAND;
     packet->command = (uint8_t)command;
 
-    /*
-     * LENGTH:
-     *
-     * TYPE + COMMAND
-     * = 1 + 1
-     * = 2
-     */
-
-    packet->length = BL_PROTOCOL_FIXED_DATA_SIZE;
-
     packet->crc =
         BL_Protocol_ComputeCRC(packet);
+
+    return true;
 }
 
 
@@ -446,14 +439,14 @@ void BL_Protocol_Parser_Init(
 }
 
 
-bool BL_Protocol_Parser_PushByte(
+BL_Protocol_ParseResult_t BL_Protocol_Parser_PushByte(
     BL_Protocol_Parser_t *parser,
     uint8_t byte
 )
 {
     if (parser == NULL)
     {
-        return false;
+        return BL_PROTOCOL_PARSE_ERROR;
     }
 
     switch (parser->state)
@@ -463,10 +456,12 @@ bool BL_Protocol_Parser_PushByte(
             if (byte == BL_PROTOCOL_SOF)
             {
                 parser->packet.sof = byte;
-                parser->state = BL_PROTOCOL_PARSE_LENGTH;
+
+                parser->state =
+                    BL_PROTOCOL_PARSE_LENGTH;
             }
 
-            break;
+            return BL_PROTOCOL_PARSE_IN_PROGRESS;
 
 
         case BL_PROTOCOL_PARSE_LENGTH:
@@ -475,7 +470,8 @@ bool BL_Protocol_Parser_PushByte(
                 (byte > BL_PROTOCOL_MAX_LENGTH))
             {
                 BL_Protocol_Parser_Reset(parser);
-                break;
+
+                return BL_PROTOCOL_PARSE_ERROR;
             }
 
             parser->packet.length = byte;
@@ -485,18 +481,20 @@ bool BL_Protocol_Parser_PushByte(
 
             parser->data_index = 0U;
 
-            parser->state = BL_PROTOCOL_PARSE_TYPE;
+            parser->state =
+                BL_PROTOCOL_PARSE_TYPE;
 
-            break;
+            return BL_PROTOCOL_PARSE_IN_PROGRESS;
 
 
         case BL_PROTOCOL_PARSE_TYPE:
 
             parser->packet.type = byte;
 
-            parser->state = BL_PROTOCOL_PARSE_COMMAND;
+            parser->state =
+                BL_PROTOCOL_PARSE_COMMAND;
 
-            break;
+            return BL_PROTOCOL_PARSE_IN_PROGRESS;
 
 
         case BL_PROTOCOL_PARSE_COMMAND:
@@ -505,14 +503,16 @@ bool BL_Protocol_Parser_PushByte(
 
             if (parser->data_length > 0U)
             {
-                parser->state = BL_PROTOCOL_PARSE_DATA;
+                parser->state =
+                    BL_PROTOCOL_PARSE_DATA;
             }
             else
             {
-                parser->state = BL_PROTOCOL_PARSE_CRC_HIGH;
+                parser->state =
+                    BL_PROTOCOL_PARSE_CRC_HIGH;
             }
 
-            break;
+            return BL_PROTOCOL_PARSE_IN_PROGRESS;
 
 
         case BL_PROTOCOL_PARSE_DATA:
@@ -523,22 +523,25 @@ bool BL_Protocol_Parser_PushByte(
 
             parser->data_index++;
 
-            if (parser->data_index >= parser->data_length)
+            if (parser->data_index >=
+                parser->data_length)
             {
-                parser->state = BL_PROTOCOL_PARSE_CRC_HIGH;
+                parser->state =
+                    BL_PROTOCOL_PARSE_CRC_HIGH;
             }
 
-            break;
+            return BL_PROTOCOL_PARSE_IN_PROGRESS;
 
 
         case BL_PROTOCOL_PARSE_CRC_HIGH:
 
             parser->packet.crc =
-                ((uint16_t)byte << 8U);
+                (uint16_t)byte << 8U;
 
-            parser->state = BL_PROTOCOL_PARSE_CRC_LOW;
+            parser->state =
+                BL_PROTOCOL_PARSE_CRC_LOW;
 
-            break;
+            return BL_PROTOCOL_PARSE_IN_PROGRESS;
 
 
         case BL_PROTOCOL_PARSE_CRC_LOW:
@@ -549,7 +552,8 @@ bool BL_Protocol_Parser_PushByte(
                 parser->packet.crc |
                 (uint16_t)byte;
 
-            parser->packet.crc = received_crc;
+            parser->packet.crc =
+                received_crc;
 
             parser->state =
                 BL_PROTOCOL_PARSE_WAIT_SOF;
@@ -558,10 +562,10 @@ bool BL_Protocol_Parser_PushByte(
                     &parser->packet
                 ) == received_crc)
             {
-                return true;
+                return BL_PROTOCOL_PARSE_PACKET_READY;
             }
 
-            return false;
+            return BL_PROTOCOL_PARSE_CRC_ERROR;
         }
 
 
@@ -569,10 +573,8 @@ bool BL_Protocol_Parser_PushByte(
 
             BL_Protocol_Parser_Reset(parser);
 
-            break;
+            return BL_PROTOCOL_PARSE_ERROR;
     }
-
-    return false;
 }
 
 

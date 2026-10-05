@@ -146,6 +146,16 @@ typedef enum
 } BL_Protocol_ParseState_t;
 
 
+typedef enum
+{
+    BL_PROTOCOL_PARSE_IN_PROGRESS = 0U,
+    BL_PROTOCOL_PARSE_PACKET_READY,
+    BL_PROTOCOL_PARSE_CRC_ERROR,
+    BL_PROTOCOL_PARSE_ERROR
+
+} BL_Protocol_ParseResult_t;
+
+
 typedef struct
 {
     BL_Protocol_Packet_t      packet;
@@ -163,7 +173,7 @@ void BL_Protocol_Parser_Init(
 );
 
 
-bool BL_Protocol_Parser_PushByte(
+BL_Protocol_ParseResult_t BL_Protocol_Parser_PushByte(
     BL_Protocol_Parser_t *parser,
     uint8_t byte
 );
@@ -255,7 +265,7 @@ bool BL_Protocol_ExtractCommand(
  * @param packet   Output packet.
  * @param command  Command to encode.
  */
-void BL_Protocol_CreateCommandPacket(
+bool BL_Protocol_CreateCommandPacket(
     BL_Protocol_Packet_t *packet,
     BL_Command_t          command
 );
