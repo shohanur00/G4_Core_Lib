@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "bl_flash_config.h"
+#include "../config/bl_flash_config.h"
 
 
 bool BL_Flash_Init(void);

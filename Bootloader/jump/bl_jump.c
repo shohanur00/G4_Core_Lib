@@ -1,7 +1,7 @@
 #include "bl_jump.h"
 
 #include "stm32g431xx.h"
-#include "../flash/bl_flash_config.h"
+#include "../config/bl_flash_config.h"
 
 
 /* --------------------------------------------------------------------------

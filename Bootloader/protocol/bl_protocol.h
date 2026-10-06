@@ -14,7 +14,7 @@
 #define BL_PROTOCOL_SOF            (0xA5U)
 
 #define BL_PROTOCOL_MAX_DATA_SIZE  (16U)
-#define BL_PROTOCOL_MAX_FRAME_SIZE (22U)
+// #define BL_PROTOCOL_MAX_FRAME_SIZE (22U)
 
 
 /* ============================================================================
@@ -101,6 +101,8 @@ typedef enum
 
     BL_CMD_SET_APP_START_ADDRESS        = 0x4AU,
     BL_CMD_APP_START_ADDRESS_ERROR      = 0x4BU,
+
+    BL_CMD_FW_DATA                      = 0x50U,
 
     BL_CMD_READY_FOR_DATA               = 0x48U,
 
