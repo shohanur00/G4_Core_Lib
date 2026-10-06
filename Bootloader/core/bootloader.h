@@ -50,6 +50,7 @@ typedef enum
     BL_ERROR_DEVICE_ID       = 0x08U,
     BL_ERROR_NO_RETRY_PACKET = 0x09U,
     BL_ERROR_FLASH_ERASE     = 0x0AU,
+    BL_ERROR_DATA            = 0x0BU,
 
 
 } BL_ErrorCode_t;
@@ -68,6 +69,7 @@ typedef struct
     uint32_t offset;
     uint32_t crc;
     uint32_t start_address;
+    uint32_t write_address;
 
 } BL_FirmwareInfo_t;
 

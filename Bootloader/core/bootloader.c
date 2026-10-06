@@ -6,6 +6,7 @@
 #include "../config/bl_flash_config.h"
 #include "../flash/bl_flash.h"
 #include "flash/bl_flash.h"
+#include <stdint.h>
 
 
 
@@ -512,6 +513,8 @@ static void Bootloader_ProcessPacket(
             bl_context.firmware_info.offset =
                 start_address - BL_APP_START_ADDRESS;
 
+            bl_context.firmware_info.write_address = bl_context.firmware_info.start_address;
+
 
             if(!BL_Flash_Erase(BL_APP_START_ADDRESS, BL_APP_SIZE)){
                 Bootloader_SendNACK(BL_ERROR_FLASH_ERASE);
@@ -531,13 +534,37 @@ static void Bootloader_ProcessPacket(
             Bootloader_SendACK();
 
 
-            bl_context.state =
-                BL_STATE_WAIT_SYNC;
+            bl_context.state = BL_STATE_READY;
 
 
             break;
         }
 
+        case BL_CMD_FW_DATA:
+        {
+            if (bl_context.state != BL_STATE_READY){
+
+                Bootloader_SendNACK(BL_ERROR_STATE);
+                bl_context.state = BL_STATE_WAIT_SYNC;
+
+                break;
+
+            }
+
+            uint8_t data[BL_PROTOCOL_MAX_DATA_SIZE];
+            uint8_t data_length = 0;
+            if (BL_Protocol_ExtractData(packet, data, &data_length) != BL_ERROR_NONE)
+            {
+                Bootloader_SendNACK(BL_ERROR_DATA);
+                break;
+                
+            }
+
+
+            bl_context.firmware_info.write_address += bl_context.firmware_info.offset;
+            bl_context.firmware_info.offset = data_length;
+
+        }
 
         /* ----------------------------------------------------------
          * RETX
