@@ -2,6 +2,7 @@
 #include "stm32g431xx.h"
 
 #include <stddef.h>
+#include "logger/frontend/logger.h"
 
 
 /* ============================================================================
@@ -93,12 +94,21 @@ static bool BL_Flash_IsRangeValid(
 }
 
 
-static void BL_Flash_WaitWhileBusy(void)
+#define BL_FLASH_TIMEOUT_LOOPS  4000000UL   /* tune: worst-case page erase er cheye boro */
+
+static bool BL_Flash_WaitWhileBusy(void)
 {
+    uint32_t timeout = BL_FLASH_TIMEOUT_LOOPS;
+
     while ((FLASH->SR & FLASH_SR_BSY) != 0U)
     {
-        /* Wait */
+        if (timeout-- == 0U)
+        {
+            return false;
+        }
     }
+
+    return true;
 }
 
 
@@ -165,9 +175,6 @@ bool BL_Flash_Erase(
         return false;
     }
 
-    /*
-     * Convert address to flash page number.
-     */
     start_page =
         (address - BL_FLASH_START_ADDRESS) /
         BL_FLASH_PAGE_SIZE;
@@ -176,6 +183,7 @@ bool BL_Flash_Erase(
         ((address + length - 1U) -
          BL_FLASH_START_ADDRESS) /
         BL_FLASH_PAGE_SIZE;
+
 
     BL_Flash_Unlock();
 
@@ -188,57 +196,38 @@ bool BL_Flash_Erase(
          page <= end_page;
          page++)
     {
-        /*
-         * Wait until previous operation is finished.
-         */
+
         BL_Flash_WaitWhileBusy();
 
-        /*
-         * Clear previous status flags.
-         */
         BL_Flash_ClearStatusFlags();
 
-        /*
-         * Select page.
-         */
         FLASH->CR &= ~FLASH_CR_PNB;
 
         FLASH->CR |=
             ((page << FLASH_CR_PNB_Pos) &
              FLASH_CR_PNB);
 
-        /*
-         * Page erase.
-         */
         FLASH->CR |= FLASH_CR_PER;
 
         FLASH->CR |= FLASH_CR_STRT;
 
-        /*
-         * Wait for erase completion.
-         */
         BL_Flash_WaitWhileBusy();
 
-        /*
-         * Disable page erase mode.
-         */
         FLASH->CR &= ~FLASH_CR_PER;
 
-        /*
-         * Check erase result.
-         */
         if (BL_Flash_HasError())
         {
             BL_Flash_Lock();
+
             return false;
         }
+
     }
 
     BL_Flash_Lock();
 
     return true;
 }
-
 
 /* ============================================================================
  * Flash Write

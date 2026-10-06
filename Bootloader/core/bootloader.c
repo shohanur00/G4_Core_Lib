@@ -513,11 +513,16 @@ static void Bootloader_ProcessPacket(
                 start_address - BL_APP_START_ADDRESS;
 
 
-            // if(!BL_Flash_Erase(BL_APP_START_ADDRESS, BL_APP_SIZE)){
-            //     Bootloader_SendNACK(BL_ERROR_FLASH_ERASE);
-            //     break;
-            // }
+            if(!BL_Flash_Erase(BL_APP_START_ADDRESS, BL_APP_SIZE)){
+                Bootloader_SendNACK(BL_ERROR_FLASH_ERASE);
+                break;
+            }
             
+            if(!BL_Flash_IsErased(BL_APP_START_ADDRESS, BL_APP_SIZE)){
+                Bootloader_SendNACK(BL_ERROR_FLASH_ERASE);
+                break;
+            }
+
             Bootloader_SaveRetryContext(
                 packet,
                 bl_context.state

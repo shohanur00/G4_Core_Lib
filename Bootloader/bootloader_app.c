@@ -8,6 +8,8 @@
 #include "logger/frontend/logger.h"
 #include "jump/bl_jump.h"
 #include "core/bootloader.h"
+#include "flash/bl_flash.h"
+#include "config/bl_flash_config.h"
 // #include "version.h"
 
 
@@ -33,9 +35,11 @@ void Bootloader_App_Setup(void)
     TimeCore_Init();
     LOG_Init();
     Bootloader_Init();
+    // BL_Flash_Init();
+
     // Version_LOG();
     LED_timer = TimeCore_CreateTimer(200); // Create a timer for 200 ms
-    jump_timer = TimeCore_CreateTimer(1000*60*5); // Create a timer for 5 seconds
+    jump_timer = TimeCore_CreateTimer(1000*5); // Create a timer for 5 seconds
     TimeCore_StartTimer(LED_timer);
     TimeCore_StartTimer(jump_timer);
 
@@ -48,10 +52,10 @@ void Bootloader_App_Loop(void)
     {
         GPIO_Toggle(GPIO_LED);
 
-        LOG_INFO(
-            LOG_MODULE_SYSTEM,
-            "Bootloader RUNNING!"
-        );
+        // LOG_INFO(
+        //     LOG_MODULE_SYSTEM,
+        //     "Bootloader RUNNING!"
+        // );
     }
 
 
@@ -62,6 +66,9 @@ void Bootloader_App_Loop(void)
             LOG_MODULE_SYSTEM,
             "Jumping to Application!"
         );
+
+        //BL_Flash_Erase(BL_APP_START_ADDRESS, 108*1024UL);
+
 
         // Bootloader_App_Deinit();
 
