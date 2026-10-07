@@ -219,8 +219,6 @@ if(BOOTLOADER_VALUE EQUAL 1)
 
     Bootloader/core/bootloader.c
 
-    Bootloader/image/image.c
-
     Bootloader/protocol/bl_protocol.c
 
     Bootloader/transport/bl_transport.c
