@@ -7,6 +7,43 @@
 
 
 /* ============================================================================
+ * Bootloader LED Timing Configuration
+ * ============================================================================
+ *
+ * BL_LED_NOT_CONNECTED_BLINK_TIME defines the LED blink interval when the
+ * bootloader is waiting for a PC connection.
+ *
+ * BL_LED_PROGRAMMING_BLINK_TIME defines the LED blink interval during
+ * firmware programming.
+ *
+ * BL_LED_ERROR_BLINK_TIME defines the LED blink interval when a bootloader
+ * error condition occurs.
+ *
+ * ========================================================================== */
+
+#define BL_LED_NOT_CONNECTED_BLINK_TIME    200U
+#define BL_LED_PROGRAMMING_BLINK_TIME       50U
+#define BL_LED_ERROR_BLINK_TIME           3000U
+
+
+/* ============================================================================
+ * Bootloader Timeout Configuration
+ * ============================================================================
+ *
+ * BL_STARTUP_WAIT_TIME defines the initial time the bootloader waits for
+ * a PC SYNC request after startup.
+ *
+ * BL_PROGRAMMING_TIMEOUT defines the additional time allowed for an
+ * ongoing firmware update after the initial startup wait expires.
+ *
+ * ========================================================================== */
+
+#define BL_STARTUP_WAIT_TIME              5000U
+#define BL_PROGRAMMING_TIMEOUT           30000U
+
+
+
+/* ============================================================================
  * Logger UART Configuration
  * ============================================================================
  *

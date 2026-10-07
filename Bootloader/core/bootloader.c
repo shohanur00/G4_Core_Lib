@@ -933,3 +933,36 @@ void Bootloader_Process(void)
         }
     }
 }
+
+
+bool Bootloader_ValidateApplication(void)
+{
+    uint16_t expected_crc;
+    uint16_t calculated_crc;
+
+    expected_crc = bl_context.firmware_info.crc;
+
+    calculated_crc =
+        BL_Flash_CalculateCRC(
+            bl_context.firmware_info.start_address,
+            bl_context.firmware_info.size
+        );
+
+    return (calculated_crc == expected_crc);
+}
+
+
+void Bootloader_GetBackTo_Idle(void)
+{
+    bl_context.state = BL_STATE_WAIT_SYNC;
+
+    bl_context.retry_count = 0U;
+    bl_context.retry.last_packet_valid = false;
+
+    bl_context.firmware_info.size = 0U;
+    bl_context.firmware_info.received_size = 0U;
+    bl_context.firmware_info.start_address = 0U;
+    bl_context.firmware_info.write_address = 0U;
+    bl_context.firmware_info.offset = 0U;
+    bl_context.firmware_info.crc = 0U;
+}
