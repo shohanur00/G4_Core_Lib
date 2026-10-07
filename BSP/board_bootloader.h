@@ -21,9 +21,9 @@
  *
  * ========================================================================== */
 
-#define BL_LED_NOT_CONNECTED_BLINK_TIME    200U
-#define BL_LED_PROGRAMMING_BLINK_TIME       50U
-#define BL_LED_ERROR_BLINK_TIME           3000U
+#define BL_LED_NOT_CONNECTED_BLINK_TIME     50U
+#define BL_LED_PROGRAMMING_BLINK_TIME       20U
+#define BL_LED_ERROR_BLINK_TIME            500U
 
 
 /* ============================================================================
@@ -39,7 +39,7 @@
  * ========================================================================== */
 
 #define BL_STARTUP_WAIT_TIME              5000U
-#define BL_PROGRAMMING_TIMEOUT           30000U
+#define BL_PROGRAMMING_TIMEOUT           20000U
 
 
 
