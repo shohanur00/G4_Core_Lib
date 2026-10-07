@@ -237,6 +237,7 @@ if(BOOTLOADER_VALUE EQUAL 1)
 
     Bootloader/tests/bl_protocol_test.c
     Bootloader/tests/bl_flash_test.c
+    Bootloader/metadata/bl_metadata.c
 
     )
 

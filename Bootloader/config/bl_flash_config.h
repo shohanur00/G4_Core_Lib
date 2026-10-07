@@ -20,29 +20,35 @@
 
 #define BL_BOOTLOADER_START_ADDRESS     (0x08000000UL)
 #define BL_BOOTLOADER_SIZE              (16UL * 1024UL)
-
 #define BL_BOOTLOADER_END_ADDRESS       \
     (BL_BOOTLOADER_START_ADDRESS + BL_BOOTLOADER_SIZE - 1UL)
 
-
 /* ============================================================================
- * Application Memory
+ * Main Application Memory
  * ========================================================================== */
 
 #define BL_APP_START_ADDRESS            (0x08004000UL)
 #define BL_APP_SIZE                     (108UL * 1024UL)
-
-#define BL_APP_END_ADDRESS              (BL_APP_START_ADDRESS + BL_APP_SIZE - 1UL)
-
+#define BL_APP_END_ADDRESS              \
+    (BL_APP_START_ADDRESS + BL_APP_SIZE - 1UL)
 
 /* ============================================================================
- * Data Memory
+ * Bootloader Metadata
  * ========================================================================== */
 
-#define BL_DATA_START_ADDRESS           (0x0801F000UL)
-#define BL_DATA_SIZE                    (4UL * 1024UL)
+#define BL_METADATA_START_ADDRESS       (0x0801F000UL)
+#define BL_METADATA_SIZE                (2UL * 1024UL)
+#define BL_METADATA_END_ADDRESS         \
+    (BL_METADATA_START_ADDRESS + BL_METADATA_SIZE - 1UL)
 
-#define BL_DATA_END_ADDRESS             (BL_DATA_START_ADDRESS + BL_DATA_SIZE - 1UL)
+/* ============================================================================
+ * Main Application Data
+ * ========================================================================== */
+
+#define BL_APP_DATA_START_ADDRESS       (0x0801F800UL)
+#define BL_APP_DATA_SIZE                (2UL * 1024UL)
+#define BL_APP_DATA_END_ADDRESS         \
+    (BL_APP_DATA_START_ADDRESS + BL_APP_DATA_SIZE - 1UL)
 
 
 
