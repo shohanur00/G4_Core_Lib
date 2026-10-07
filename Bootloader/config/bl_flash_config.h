@@ -41,6 +41,11 @@
 #define BL_METADATA_END_ADDRESS         \
     (BL_METADATA_START_ADDRESS + BL_METADATA_SIZE - 1UL)
 
+#define BL_FIRMWARE_METADATA_MAGIC      (0x424C4D44UL)
+
+#define BL_UPDATE_STATUS_INVALID        (0x00000000UL)
+#define BL_UPDATE_STATUS_VALID          (0xA5A5A5A5UL)
+
 /* ============================================================================
  * Main Application Data
  * ========================================================================== */

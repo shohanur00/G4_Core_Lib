@@ -203,7 +203,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     # -------------------------------------------------------------------------
 
     Version/version.c
-    Bootloader/jump/bl_jump.c
+    
 
 )
 
@@ -237,7 +237,14 @@ if(BOOTLOADER_VALUE EQUAL 1)
 
     Bootloader/tests/bl_protocol_test.c
     Bootloader/tests/bl_flash_test.c
+
+
+    # -------------------------------------------------------------------------
+    # Other Source
+    # -------------------------------------------------------------------------
+    
     Bootloader/metadata/bl_metadata.c
+    Bootloader/jump/bl_jump.c
 
     )
 

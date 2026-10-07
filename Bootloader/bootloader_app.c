@@ -121,7 +121,7 @@ void Bootloader_App_Loop(void)
     {
         if (Bootloader_GetState() == BL_STATE_WAIT_SYNC)
         {
-            if (Bootloader_ValidateApplication())
+            if (Bootloader_ValidateApplication() && BL_Jump_IsApplicationValid())
             {
                 Bootloader_App_Deinit();
                 BL_Jump_ToApplication();
@@ -179,7 +179,7 @@ void Bootloader_App_Loop(void)
     {
         if (Bootloader_GetState() != BL_STATE_VALID)
         {
-            if (Bootloader_ValidateApplication())
+            if (Bootloader_ValidateApplication() && BL_Jump_IsApplicationValid())
             {
                 Bootloader_App_Deinit();
                 BL_Jump_ToApplication();

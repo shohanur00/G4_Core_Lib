@@ -13,11 +13,11 @@
 
 
 /* ============================================================================
- * Flash Initialization
+ * Initialization
  * ========================================================================== */
 
 /**
- * @brief Initialize the bootloader flash module.
+ * @brief Initialize the Flash module.
  *
  * @return true  Flash module initialized successfully.
  * @return false Flash module initialization failed.
@@ -26,20 +26,20 @@ bool BL_Flash_Init(void);
 
 
 /* ============================================================================
- * Flash Erase
+ * Erase
  * ========================================================================== */
 
 /**
- * @brief Erase a specified flash memory region.
+ * @brief Erase a region of the application Flash.
  *
- * The address and length must fall within the configured application
- * flash region.
+ * The requested address range must be completely inside the configured
+ * application Flash region.
  *
- * @param address Start address of the flash region.
+ * @param address Start address of the Flash region.
  * @param length  Number of bytes to erase.
  *
  * @return true  Flash erase completed successfully.
- * @return false Flash erase failed or the requested range is invalid.
+ * @return false Invalid range or erase operation failed.
  */
 bool BL_Flash_Erase(
     uint32_t address,
@@ -47,19 +47,37 @@ bool BL_Flash_Erase(
 );
 
 
+/**
+ * @brief Erase a region of the metadata Flash.
+ *
+ * The requested address range must be completely inside the configured
+ * metadata Flash region.
+ *
+ * @param address Start address of the metadata region.
+ * @param length  Number of bytes to erase.
+ *
+ * @return true  Metadata erase completed successfully.
+ * @return false Invalid range or erase operation failed.
+ */
+bool BL_Flash_Erase_MetaData(
+    uint32_t address,
+    uint32_t length
+);
+
+
 /* ============================================================================
- * Flash Write
+ * Write
  * ========================================================================== */
 
 /**
- * @brief Write data to flash memory.
+ * @brief Write data to the application Flash.
  *
  * @param address Start address where the data will be written.
  * @param data    Pointer to the source data buffer.
  * @param length  Number of bytes to write.
  *
  * @return true  Data written successfully.
- * @return false Flash write failed or the requested range is invalid.
+ * @return false Invalid parameters, invalid range, or write failure.
  */
 bool BL_Flash_Write(
     uint32_t       address,
@@ -68,17 +86,31 @@ bool BL_Flash_Write(
 );
 
 
+/**
+ * @brief Write data to the metadata Flash.
+ *
+ * @param address Start address where the data will be written.
+ * @param data    Pointer to the source data buffer.
+ * @param length  Number of bytes to write.
+ *
+ * @return true  Metadata written successfully.
+ * @return false Invalid parameters, invalid range, or write failure.
+ */
+bool BL_Flash_Write_MetaData(
+    uint32_t       address,
+    const uint8_t *data,
+    uint32_t       length
+);
+
+
 /* ============================================================================
- * Flash Verify
+ * Verify
  * ========================================================================== */
 
 /**
- * @brief Verify flash contents against a data buffer.
+ * @brief Verify application Flash contents against a data buffer.
  *
- * Reads the specified flash region and compares it with the provided
- * data buffer.
- *
- * @param address Start address of the flash region.
+ * @param address Start address of the Flash region.
  * @param data    Pointer to the expected data.
  * @param length  Number of bytes to verify.
  *
@@ -92,21 +124,37 @@ bool BL_Flash_Verify(
 );
 
 
+/**
+ * @brief Verify metadata Flash contents against a data buffer.
+ *
+ * @param address Start address of the metadata region.
+ * @param data    Pointer to the expected data.
+ * @param length  Number of bytes to verify.
+ *
+ * @return true  Metadata contents match the expected data.
+ * @return false Verification failed or the requested range is invalid.
+ */
+bool BL_Flash_Verify_MetaData(
+    uint32_t       address,
+    const uint8_t *data,
+    uint32_t       length
+);
+
+
 /* ============================================================================
- * Flash Erased Check
+ * Erased Check
  * ========================================================================== */
 
 /**
- * @brief Check whether a flash memory region is erased.
+ * @brief Check whether an application Flash region is completely erased.
  *
- * The function checks whether all bytes in the specified region contain
- * the configured erased flash value.
+ * The STM32 Flash erased state is expected to be 0xFF.
  *
- * @param address Start address of the flash region.
+ * @param address Start address of the Flash region.
  * @param length  Number of bytes to check.
  *
- * @return true  The complete region is erased.
- * @return false The region contains programmed data or the range is invalid.
+ * @return true  All bytes in the region are 0xFF.
+ * @return false Region contains programmed data or the range is invalid.
  */
 bool BL_Flash_IsErased(
     uint32_t address,
@@ -114,19 +162,36 @@ bool BL_Flash_IsErased(
 );
 
 
+/**
+ * @brief Check whether a metadata Flash region is completely erased.
+ *
+ * The STM32 Flash erased state is expected to be 0xFF.
+ *
+ * @param address Start address of the metadata region.
+ * @param length  Number of bytes to check.
+ *
+ * @return true  All bytes in the region are 0xFF.
+ * @return false Region contains programmed data or the range is invalid.
+ */
+bool BL_Flash_IsErased_MetaData(
+    uint32_t address,
+    uint32_t length
+);
+
+
 /* ============================================================================
- * Flash Read
+ * Read
  * ========================================================================== */
 
 /**
- * @brief Read data from flash memory.
+ * @brief Read data from the application Flash.
  *
- * @param address Start address of the flash region.
+ * @param address Start address of the Flash region.
  * @param data    Pointer to the destination buffer.
  * @param length  Number of bytes to read.
  *
  * @return true  Data read successfully.
- * @return false Flash read failed or the requested range is invalid.
+ * @return false Invalid parameters or the requested range is invalid.
  */
 bool BL_Flash_Read(
     uint32_t address,
@@ -135,20 +200,39 @@ bool BL_Flash_Read(
 );
 
 
+/**
+ * @brief Read data from the metadata Flash.
+ *
+ * @param address Start address of the metadata region.
+ * @param data    Pointer to the destination buffer.
+ * @param length  Number of bytes to read.
+ *
+ * @return true  Data read successfully.
+ * @return false Invalid parameters or the requested range is invalid.
+ */
+bool BL_Flash_Read_MetaData(
+    uint32_t address,
+    uint8_t *data,
+    uint32_t length
+);
+
+
 /* ============================================================================
- * Flash CRC Calculation
+ * CRC
  * ========================================================================== */
 
 /**
- * @brief Calculate CRC16 over a flash memory region.
+ * @brief Calculate CRC16 over an application Flash region.
  *
- * The CRC is calculated over the specified flash address range using
- * the configured CRC algorithm.
+ * The CRC algorithm and initial value are defined in the Flash
+ * configuration.
  *
- * @param address Start address of the flash region.
+ * @param address Start address of the Flash region.
  * @param length  Number of bytes included in the CRC calculation.
  *
  * @return Calculated CRC16 value.
+ *
+ * @note Returns 0U if the requested Flash range is invalid.
  */
 uint16_t BL_Flash_CalculateCRC(
     uint32_t address,

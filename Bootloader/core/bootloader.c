@@ -7,6 +7,7 @@
 #include "../flash/bl_flash.h"
 #include "flash/bl_flash.h"
 #include <stdint.h>
+#include "../metadata/bl_metadata.h"
 
 
 #define BL_MAX_RETRY_COUNT    (10U)
@@ -37,6 +38,8 @@ typedef struct
 
     uint8_t              retry_count;
 
+    BL_FirmwareMetadata_t metadata;
+
 } BL_Context_t;
 
 
@@ -59,7 +62,8 @@ static BL_Context_t bl_context =
         .last_packet_valid = false
     },
 
-    .retry_count = 0
+    .retry_count = 0,
+    .metadata   = {0}
 };
 
 
@@ -602,6 +606,17 @@ static void Bootloader_ProcessPacket(
 
             bl_context.firmware_info.write_address = bl_context.firmware_info.start_address;
 
+            if (!BL_Flash_Erase_MetaData(BL_METADATA_START_ADDRESS,BL_METADATA_SIZE))
+            {
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_FLASH_ERASE);
+                break;
+            }
+
+            
+            if(!BL_Flash_IsErased_MetaData(BL_METADATA_START_ADDRESS, BL_METADATA_SIZE)){
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_FLASH_ERASE);
+                break;
+            }
 
             if(!BL_Flash_Erase(BL_APP_START_ADDRESS, BL_APP_SIZE)){
                 Bootloader_SendNACKAndCheckRetry(BL_ERROR_FLASH_ERASE);
@@ -770,6 +785,16 @@ static void Bootloader_ProcessPacket(
             }
 
             bl_context.firmware_info.crc = calculated_crc;
+            bl_context.metadata.magic = BL_FIRMWARE_METADATA_MAGIC;
+            bl_context.metadata.start_address = bl_context.firmware_info.start_address;
+            bl_context.metadata.size = bl_context.firmware_info.size;
+            bl_context.metadata.crc = bl_context.firmware_info.crc;
+            bl_context.metadata.update_status = BL_UPDATE_STATUS_VALID;
+
+            if(!BL_Metadata_Save(&bl_context.metadata))
+            {
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_DATA);
+            }
             /*
             * Firmware CRC verified successfully
             */
@@ -937,18 +962,41 @@ void Bootloader_Process(void)
 
 bool Bootloader_ValidateApplication(void)
 {
-    uint16_t expected_crc;
+    
     uint16_t calculated_crc;
 
-    expected_crc = bl_context.firmware_info.crc;
+    /* Read firmware metadata from flash */
+    if (!BL_Metadata_Read(&bl_context.metadata))
+    {
+        return false;
+    }
 
+    /* Validate metadata */
+    if (!BL_Metadata_IsValid(&bl_context.metadata))
+    {
+        return false;
+    }
+
+    /* Check update status */
+    if (bl_context.metadata.update_status != BL_UPDATE_STATUS_VALID)
+    {
+        return false;
+    }
+
+    /* Calculate CRC of the installed application */
     calculated_crc =
         BL_Flash_CalculateCRC(
-            bl_context.firmware_info.start_address,
-            bl_context.firmware_info.size
+            bl_context.metadata.start_address,
+            bl_context.metadata.size
         );
 
-    return (calculated_crc == expected_crc);
+    /* Compare calculated CRC with stored CRC */
+    if (calculated_crc != bl_context.metadata.crc)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 
