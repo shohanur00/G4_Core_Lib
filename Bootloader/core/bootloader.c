@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 
-
+#define BL_MAX_RETRY_COUNT    (10U)
 
 
 /* --------------------------------------------------------------------------
@@ -35,6 +35,8 @@ typedef struct
 
     BL_RetryContext_t    retry;
 
+    uint8_t              retry_count;
+
 } BL_Context_t;
 
 
@@ -55,7 +57,9 @@ static BL_Context_t bl_context =
         .last_packet       = {0},
         .last_state        = BL_STATE_WAIT_SYNC,
         .last_packet_valid = false
-    }
+    },
+
+    .retry_count = 0
 };
 
 
@@ -85,6 +89,8 @@ static void Bootloader_SendACK(void)
             length
         );
     }
+
+    bl_context.retry_count = 0U;
 }
 
 
@@ -295,6 +301,28 @@ static bool Bootloader_WriteFirmwareData(
     return true;
 }
 
+
+static bool Bootloader_SendNACKAndCheckRetry(
+    BL_ErrorCode_t error
+)
+{
+    Bootloader_SendNACK(error);
+
+    bl_context.retry_count++;
+
+    if (bl_context.retry_count >= BL_MAX_RETRY_COUNT)
+    {
+        bl_context.retry_count = 0U;
+        bl_context.retry.last_packet_valid = false;
+        bl_context.state = BL_STATE_WAIT_SYNC;
+
+        return false;
+    }
+
+    return true;
+}
+
+
 /* --------------------------------------------------------------------------
  * Packet Processing
  * -------------------------------------------------------------------------- */
@@ -314,7 +342,7 @@ static void Bootloader_ProcessPacket(
             packet,
             &command))
     {
-        Bootloader_SendNACK(
+        Bootloader_SendNACKAndCheckRetry(
             BL_ERROR_COMMAND
         );
 
@@ -420,7 +448,7 @@ static void Bootloader_ProcessPacket(
                     data,
                     &data_length))
             {
-                Bootloader_SendNACK(
+                Bootloader_SendNACKAndCheckRetry(
                     BL_ERROR_PROTOCOL
                 );
 
@@ -430,7 +458,7 @@ static void Bootloader_ProcessPacket(
 
             if (data_length != sizeof(uint32_t))
             {
-                Bootloader_SendNACK(
+                Bootloader_SendNACKAndCheckRetry(
                     BL_ERROR_LENGTH
                 );
 
@@ -463,7 +491,7 @@ static void Bootloader_ProcessPacket(
 
             bl_context.firmware_info.size =
                 firmware_size;
-
+            bl_context.firmware_info.received_size = 0U;
 
             Bootloader_SaveRetryContext(
                 packet,
@@ -511,7 +539,7 @@ static void Bootloader_ProcessPacket(
                     data,
                     &data_length))
             {
-                Bootloader_SendNACK(
+                Bootloader_SendNACKAndCheckRetry(
                     BL_ERROR_PROTOCOL
                 );
 
@@ -521,7 +549,7 @@ static void Bootloader_ProcessPacket(
 
             if (data_length != sizeof(uint32_t))
             {
-                Bootloader_SendNACK(
+                Bootloader_SendNACKAndCheckRetry(
                     BL_ERROR_LENGTH
                 );
 
@@ -576,12 +604,12 @@ static void Bootloader_ProcessPacket(
 
 
             if(!BL_Flash_Erase(BL_APP_START_ADDRESS, BL_APP_SIZE)){
-                Bootloader_SendNACK(BL_ERROR_FLASH_ERASE);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_FLASH_ERASE);
                 break;
             }
             
             if(!BL_Flash_IsErased(BL_APP_START_ADDRESS, BL_APP_SIZE)){
-                Bootloader_SendNACK(BL_ERROR_FLASH_ERASE);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_FLASH_ERASE);
                 break;
             }
 
@@ -614,13 +642,13 @@ static void Bootloader_ProcessPacket(
 
             if (!BL_Protocol_ExtractData(packet, data, &data_length))
             {
-                Bootloader_SendNACK(BL_ERROR_PROTOCOL);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_PROTOCOL);
                 break;
             }
 
             if (data_length == 0U)
             {
-                Bootloader_SendNACK(BL_ERROR_DATA);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_DATA);
                 break;
             }
 
@@ -636,7 +664,7 @@ static void Bootloader_ProcessPacket(
             */
             if ((uint32_t)data_length > remaining)
             {
-                Bootloader_SendNACK(BL_ERROR_DATA);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_DATA);
                 break;
             }
 
@@ -648,7 +676,7 @@ static void Bootloader_ProcessPacket(
                     data,
                     data_length))
             {
-                Bootloader_SendNACK(BL_ERROR_DATA);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_DATA);
                 break;
             }
 
@@ -706,7 +734,7 @@ static void Bootloader_ProcessPacket(
                     data,
                     &data_length))
             {
-                Bootloader_SendNACK(BL_ERROR_PROTOCOL);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_PROTOCOL);
                 break;
             }
 
@@ -715,7 +743,7 @@ static void Bootloader_ProcessPacket(
             */
             if (data_length != 2U)
             {
-                Bootloader_SendNACK(BL_ERROR_DATA);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_DATA);
                 break;
             }
 
@@ -737,7 +765,7 @@ static void Bootloader_ProcessPacket(
 
             if (calculated_crc != expected_crc)
             {
-                Bootloader_SendNACK(BL_ERROR_CRC);
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_CRC);
                 break;
             }
 
@@ -813,7 +841,7 @@ static void Bootloader_ProcessPacket(
 
         default:
         {
-            Bootloader_SendNACK(
+            Bootloader_SendNACKAndCheckRetry(
                 BL_ERROR_COMMAND
             );
 
@@ -821,6 +849,10 @@ static void Bootloader_ProcessPacket(
         }
     }
 }
+
+
+
+
 
 
 /* --------------------------------------------------------------------------
@@ -836,6 +868,12 @@ void Bootloader_Init(void)
     BL_Transport_Init();
 }
 
+
+
+BL_State_t Bootloader_GetState(void)
+{
+    return bl_context.state;
+}
 
 void Bootloader_Process(void)
 {
@@ -865,7 +903,7 @@ void Bootloader_Process(void)
 
                 case BL_PROTOCOL_PARSE_CRC_ERROR:
 
-                    Bootloader_SendNACK(
+                    Bootloader_SendNACKAndCheckRetry(
                         BL_ERROR_CRC
                     );
 
@@ -874,7 +912,7 @@ void Bootloader_Process(void)
 
                 case BL_PROTOCOL_PARSE_ERROR:
 
-                    Bootloader_SendNACK(
+                    Bootloader_SendNACKAndCheckRetry(
                         BL_ERROR_PROTOCOL
                     );
 

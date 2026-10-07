@@ -95,6 +95,7 @@ void Bootloader_Init(void);
  */
 void Bootloader_Process(void);
 
+BL_State_t Bootloader_GetState(void);
 
 #ifdef __cplusplus
 }

@@ -275,10 +275,10 @@ bool BL_Protocol_ExtractCommand(
         return false;
     }
 
-    if (packet->type != BL_PACKET_TYPE_COMMAND)
-    {
-        return false;
-    }
+    // if (packet->type != BL_PACKET_TYPE_COMMAND)
+    // {
+    //     return false;
+    // }
 
     if (packet->length < BL_PROTOCOL_MIN_LENGTH)
     {

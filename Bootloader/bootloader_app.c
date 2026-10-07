@@ -15,7 +15,8 @@
 
 
 static uint8_t LED_timer; // Define the GPIO pin for the LED
-static uint8_t jump_timer;  
+static uint8_t jump_timer; 
+static uint8_t timeout; 
 
 
 
@@ -36,11 +37,9 @@ void Bootloader_App_Setup(void)
     TimeCore_Init();
     LOG_Init();
     Bootloader_Init();
-    // BL_Flash_Init();
-
-    // Version_LOG();
     LED_timer = TimeCore_CreateTimer(200); // Create a timer for 200 ms
     jump_timer = TimeCore_CreateTimer(1000*5); // Create a timer for 5 seconds
+    timeout = TimeCore_CreateTimer(1000*20); // Create a timer for 30 seconds
     TimeCore_StartTimer(LED_timer);
     TimeCore_StartTimer(jump_timer);
 
@@ -54,25 +53,36 @@ void Bootloader_App_Loop(void)
     {
         GPIO_Toggle(GPIO_LED);
 
-        // LOG_INFO(
-        //     LOG_MODULE_SYSTEM,
-        //     "Bootloader RUNNING!"
-        // );
     }
 
 
     /* Jump to application after timeout */
     if (TimeCore_OneShotExpiredEvent(jump_timer))
     {
-        LOG_INFO(
-            LOG_MODULE_SYSTEM,
-            "Jumping to Application!"
-        );
-
-        // Bootloader_App_Deinit();
-
-        // BL_Jump_ToApplication();
+        if(Bootloader_GetState() == BL_STATE_WAIT_SYNC){
+            Bootloader_App_Deinit();
+            BL_Jump_ToApplication();
+        }
+        else {
+            TimeCore_StartTimer(timeout);
+        }
+        
     }
+
+    if (TimeCore_OneShotExpiredEvent(timeout))
+    {
+            Bootloader_App_Deinit();
+            BL_Jump_ToApplication();            
+    }
+
+    if(Bootloader_GetState() == BL_STATE_VALID)
+    {
+            Bootloader_App_Deinit();
+            BL_Jump_ToApplication();
+
+    }
+
+
 
 
     /* Process bootloader communication */
