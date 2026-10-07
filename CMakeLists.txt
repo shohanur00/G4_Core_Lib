@@ -111,6 +111,31 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/components.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/files.cmake)
 
 
+
+# =============================================================================
+# BIN and HEX Generator
+# =============================================================================
+
+add_custom_command(
+    TARGET G4_Core_Lib
+    POST_BUILD
+
+    # Generate .bin
+    COMMAND arm-none-eabi-objcopy
+            -O binary
+            $<TARGET_FILE:G4_Core_Lib>
+            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.bin
+
+    # Generate .hex
+    COMMAND arm-none-eabi-objcopy
+            -O ihex
+            $<TARGET_FILE:G4_Core_Lib>
+            ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.hex
+
+    COMMENT "Generating ${PROJECT_NAME}.bin and ${PROJECT_NAME}.hex"
+)
+
+
 # =============================================================================
 # Source Files
 # =============================================================================

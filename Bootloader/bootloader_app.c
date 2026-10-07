@@ -8,8 +8,9 @@
 #include "logger/frontend/logger.h"
 #include "jump/bl_jump.h"
 #include "core/bootloader.h"
-#include "flash/bl_flash.h"
-#include "config/bl_flash_config.h"
+// #include "flash/bl_flash.h"
+// #include "config/bl_flash_config.h"
+#include <stdint.h>
 // #include "version.h"
 
 
@@ -47,6 +48,7 @@ void Bootloader_App_Setup(void)
 
 void Bootloader_App_Loop(void)
 {
+
     /* LED heartbeat */
     if (TimeCore_ContinousExpiredEvent(LED_timer))
     {
@@ -66,9 +68,6 @@ void Bootloader_App_Loop(void)
             LOG_MODULE_SYSTEM,
             "Jumping to Application!"
         );
-
-        //BL_Flash_Erase(BL_APP_START_ADDRESS, 108*1024UL);
-
 
         // Bootloader_App_Deinit();
 

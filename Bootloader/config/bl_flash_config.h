@@ -45,4 +45,8 @@
 #define BL_DATA_END_ADDRESS             (BL_DATA_START_ADDRESS + BL_DATA_SIZE - 1UL)
 
 
+#define BL_FLASH_CRC16_POLYNOMIAL    (0x1021U)
+#define BL_FLASH_CRC16_INITIAL       (0xFFFFU)
+
+
 #endif /* BL_FLASH_CONFIG_H */

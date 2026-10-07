@@ -27,7 +27,7 @@ void Firmware_Setup(void)
 
     LED_timer = TimeCore_CreateTimer(200);
 
-    TimeCore_SetDurationSecurely(LED_timer, 500);
+    TimeCore_SetDurationSecurely(LED_timer, 1000);
 
     TimeCore_StartTimer(LED_timer);
 

@@ -421,3 +421,86 @@ bool BL_Flash_IsErased(
 
     return true;
 }
+
+
+
+bool BL_Flash_Read(
+    uint32_t address,
+    uint8_t *data,
+    uint32_t length
+)
+{
+    uint32_t index;
+
+    if ((data == NULL) || (length == 0U))
+    {
+        return false;
+    }
+
+    if (!BL_Flash_IsRangeValid(address, length))
+    {
+        return false;
+    }
+
+    for (index = 0U; index < length; index++)
+    {
+        data[index] =
+            *(volatile const uint8_t *)(address + index);
+    }
+
+    return true;
+}
+
+
+
+uint16_t BL_Flash_CalculateCRC(
+    uint32_t address,
+    uint32_t length
+)
+{
+    uint16_t crc = BL_FLASH_CRC16_INITIAL;
+    uint8_t  data;
+    uint8_t  bit;
+
+    if (length == 0U)
+    {
+        return crc;
+    }
+
+    if (!BL_Flash_IsRangeValid(address, length))
+    {
+        return 0U;
+    }
+
+    while (length > 0U)
+    {
+        /*
+         * Read one byte directly from Flash.
+         */
+        data = *(volatile uint8_t *)address;
+
+        /*
+         * CRC-16-CCITT-FALSE
+         */
+        crc ^= ((uint16_t)data << 8U);
+
+        for (bit = 0U; bit < 8U; bit++)
+        {
+            if ((crc & 0x8000U) != 0U)
+            {
+                crc =
+                    (uint16_t)((crc << 1U) ^
+                               BL_FLASH_CRC16_POLYNOMIAL);
+            }
+            else
+            {
+                crc = (uint16_t)(crc << 1U);
+            }
+        }
+
+        address++;
+        length--;
+    }
+
+    return crc;
+}

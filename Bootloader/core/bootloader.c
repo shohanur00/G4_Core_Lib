@@ -236,6 +236,65 @@ static void Bootloader_SaveRetryContext(
 }
 
 
+static bool Bootloader_WriteFirmwareData(
+    uint32_t       address,
+    const uint8_t *data,
+    uint8_t        length
+)
+{
+    uint8_t buffer[BL_PROTOCOL_MAX_DATA_SIZE];
+
+    if ((data == NULL) || (length == 0U))
+    {
+        return false;
+    }
+
+    /*
+     * Copy actual packet data
+     */
+    for (uint8_t i = 0U; i < length; i++)
+    {
+        buffer[i] = data[i];
+    }
+
+    /*
+     * Pad remaining bytes with 0xFF
+     */
+    for (uint8_t i = length;
+         i < BL_PROTOCOL_MAX_DATA_SIZE;
+         i++)
+    {
+        buffer[i] = 0xFFU;
+    }
+
+    /*
+     * Write complete 16-byte packet
+     *
+     * BL_Flash_Write() internally performs:
+     * 8-byte + 8-byte programming.
+     */
+    if (!BL_Flash_Write(
+            address,
+            buffer,
+            BL_PROTOCOL_MAX_DATA_SIZE))
+    {
+        return false;
+    }
+
+    /*
+     * Verify complete 16-byte physical write
+     */
+    if (!BL_Flash_Verify(
+            address,
+            buffer,
+            BL_PROTOCOL_MAX_DATA_SIZE))
+    {
+        return false;
+    }
+
+    return true;
+}
+
 /* --------------------------------------------------------------------------
  * Packet Processing
  * -------------------------------------------------------------------------- */
@@ -534,7 +593,7 @@ static void Bootloader_ProcessPacket(
             Bootloader_SendACK();
 
 
-            bl_context.state = BL_STATE_READY;
+            bl_context.state = BL_STATE_PROGRAMMING;
 
 
             break;
@@ -542,28 +601,158 @@ static void Bootloader_ProcessPacket(
 
         case BL_CMD_FW_DATA:
         {
-            if (bl_context.state != BL_STATE_READY){
+            uint8_t  data[BL_PROTOCOL_MAX_DATA_SIZE];
+            uint8_t  data_length = 0U;
+            uint32_t remaining;
 
+            if (bl_context.state != BL_STATE_PROGRAMMING)
+            {
                 Bootloader_SendNACK(BL_ERROR_STATE);
                 bl_context.state = BL_STATE_WAIT_SYNC;
-
                 break;
-
             }
 
-            uint8_t data[BL_PROTOCOL_MAX_DATA_SIZE];
-            uint8_t data_length = 0;
-            if (BL_Protocol_ExtractData(packet, data, &data_length) != BL_ERROR_NONE)
+            if (!BL_Protocol_ExtractData(packet, data, &data_length))
+            {
+                Bootloader_SendNACK(BL_ERROR_PROTOCOL);
+                break;
+            }
+
+            if (data_length == 0U)
             {
                 Bootloader_SendNACK(BL_ERROR_DATA);
                 break;
-                
             }
 
+            /*
+            * Calculate remaining firmware bytes.
+            */
+            remaining =
+                bl_context.firmware_info.size -
+                bl_context.firmware_info.received_size;
 
-            bl_context.firmware_info.write_address += bl_context.firmware_info.offset;
-            bl_context.firmware_info.offset = data_length;
+            /*
+            * Packet must not exceed remaining firmware size.
+            */
+            if ((uint32_t)data_length > remaining)
+            {
+                Bootloader_SendNACK(BL_ERROR_DATA);
+                break;
+            }
 
+            /*
+            * Write packet to Flash.
+            */
+            if (!Bootloader_WriteFirmwareData(
+                    bl_context.firmware_info.write_address,
+                    data,
+                    data_length))
+            {
+                Bootloader_SendNACK(BL_ERROR_DATA);
+                break;
+            }
+
+            /*
+            * Update actual received firmware size.
+            */
+            bl_context.firmware_info.received_size += data_length;
+
+            /*
+            * Move physical Flash address by 16 bytes,
+            * because Bootloader_WriteFirmwareData()
+            * physically writes one complete 16-byte block.
+            */
+            bl_context.firmware_info.write_address +=
+                BL_PROTOCOL_MAX_DATA_SIZE;
+
+            /*
+            * Check firmware transmission complete.
+            */
+            if (bl_context.firmware_info.received_size ==
+                bl_context.firmware_info.size)
+            {
+                bl_context.state = BL_STATE_COMPLETE;
+
+                Bootloader_SendCommandPacket(BL_CMD_UPDATE_SUCCESSFUL);
+
+            }
+            else
+            {
+                /*
+                * More firmware data expected.
+                */
+                Bootloader_SendACK();
+            }
+
+            break;
+        }
+
+        case BL_CMD_CRC_CHECK:
+        {
+            uint16_t expected_crc;
+            uint16_t calculated_crc;
+            uint8_t  data[BL_PROTOCOL_MAX_DATA_SIZE];
+            uint8_t  data_length = 0U;
+
+            if (bl_context.state != BL_STATE_COMPLETE)
+            {
+                Bootloader_SendNACK(BL_ERROR_STATE);
+                bl_context.state = BL_STATE_WAIT_SYNC;
+                break;
+            }
+
+            if (!BL_Protocol_ExtractData(
+                    packet,
+                    data,
+                    &data_length))
+            {
+                Bootloader_SendNACK(BL_ERROR_PROTOCOL);
+                break;
+            }
+
+            /*
+            * CRC16 = 2 bytes
+            */
+            if (data_length != 2U)
+            {
+                Bootloader_SendNACK(BL_ERROR_DATA);
+                break;
+            }
+
+            /*
+            * Extract expected CRC from PC
+            */
+            expected_crc =
+                ((uint16_t)data[0] << 8U) |
+                ((uint16_t)data[1]);
+
+            /*
+            * Calculate CRC from Flash
+            */
+            calculated_crc =
+                BL_Flash_CalculateCRC(
+                    bl_context.firmware_info.start_address,
+                    bl_context.firmware_info.size
+                );
+
+            if (calculated_crc != expected_crc)
+            {
+                Bootloader_SendNACK(BL_ERROR_CRC);
+                break;
+            }
+
+            bl_context.firmware_info.crc = calculated_crc;
+            /*
+            * Firmware CRC verified successfully
+            */
+            Bootloader_SendACK();
+
+            /*
+            * Firmware is now valid
+            */
+            bl_context.state = BL_STATE_VALID;
+
+            break;
         }
 
         /* ----------------------------------------------------------

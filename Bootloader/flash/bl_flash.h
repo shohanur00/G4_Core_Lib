@@ -31,4 +31,17 @@ bool BL_Flash_IsErased(
     uint32_t length
 );
 
+
+bool BL_Flash_Read(
+    uint32_t address,
+    uint8_t *data,
+    uint32_t length
+);
+
+
+uint16_t BL_Flash_CalculateCRC(
+    uint32_t address,
+    uint32_t length
+);
+
 #endif /* BL_FLASH_H */

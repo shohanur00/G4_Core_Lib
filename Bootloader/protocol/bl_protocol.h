@@ -110,7 +110,8 @@ typedef enum
 
     BL_CMD_ACK                          = 0x15U,
     BL_CMD_NACK                         = 0x59U,
-    BL_CMD_RETX                         = 0x19U
+    BL_CMD_RETX                         = 0x19U,
+    BL_CMD_CRC_CHECK                    = 0x3BU,
 
 } BL_Command_t;
 

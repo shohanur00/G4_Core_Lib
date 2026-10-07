@@ -25,7 +25,10 @@ typedef enum
     BL_STATE_WAIT_FW_LENGTH,
     BL_STATE_WAIT_FW_START_ADDRESS,
     BL_STATE_READY,
-    BL_STATE_RECEIVING
+    BL_STATE_RECEIVING,
+    BL_STATE_COMPLETE,
+    BL_STATE_PROGRAMMING,
+    BL_STATE_VALID
 
 } BL_State_t;
 
@@ -70,6 +73,7 @@ typedef struct
     uint32_t crc;
     uint32_t start_address;
     uint32_t write_address;
+    uint32_t received_size;
 
 } BL_FirmwareInfo_t;
 
