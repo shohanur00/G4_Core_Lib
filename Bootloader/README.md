@@ -461,7 +461,6 @@ Example configure output:
 
 ## Roadmap
 
-- [ ] Complete application validation
 - [ ] Power-loss / interrupted-update testing
 - [ ] OTA (wireless) firmware update transport
 - [ ] USB firmware transport
