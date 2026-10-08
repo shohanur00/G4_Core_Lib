@@ -451,7 +451,7 @@ Example configure output:
 | Retry handling | ✅ Implemented |
 | Application jump | ✅ Implemented |
 | Host firmware updater | ✅ Implemented and tested |
-| Full application validation | 🔄 In development |
+| Full application validation | ✅ In development |
 | Power-loss / interrupted-update testing | 🔄 In development |
 | OTA (wireless) firmware update | 📋 Planned |
 | USB transport | 📋 Planned |
