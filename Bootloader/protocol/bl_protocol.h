@@ -95,6 +95,7 @@ typedef enum
 
     BL_CMD_DEVICE_ID_REQ                = 0x3CU,
     BL_CMD_DEVICE_ID_RES                = 0x3FU,
+    BL_CMD_DEVICE_ID_CONFIRM            = 0x3D, 
 
     BL_CMD_FW_SIZE                      = 0x42U,
     BL_CMD_FW_OVER_SIZE                 = 0x45U,
@@ -112,6 +113,7 @@ typedef enum
     BL_CMD_NACK                         = 0x59U,
     BL_CMD_RETX                         = 0x19U,
     BL_CMD_CRC_CHECK                    = 0x3BU,
+    BL_CMD_ERASE_FIRMWARE               = 0x60U,
 
 } BL_Command_t;
 

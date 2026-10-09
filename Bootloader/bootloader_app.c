@@ -191,12 +191,12 @@ void Bootloader_App_Loop(void)
                  */
                 Bootloader_GetBackTo_Idle();
 
-                TimeCore_SetDurationForcefully(
-                    LED_timer,
-                    BL_LED_ERROR_BLINK_TIME
-                );
+                // TimeCore_SetDurationForcefully(
+                //     LED_timer,
+                //     BL_LED_ERROR_BLINK_TIME
+                // );
 
-                state = LED_NOT_CONNECTED;
+                // state = LED_NOT_CONNECTED;
             }
         }
     }
@@ -218,6 +218,7 @@ void Bootloader_App_Loop(void)
                 GPIO_LED,
                 LOW
             );
+            TimeCore_ResumeTimer(timeout);
         }
     }
 

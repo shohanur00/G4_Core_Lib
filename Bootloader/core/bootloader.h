@@ -37,7 +37,9 @@ typedef enum
     BL_STATE_RECEIVING,           /**< Receiving firmware data. */
     BL_STATE_COMPLETE,            /**< Firmware data reception completed. */
     BL_STATE_PROGRAMMING,         /**< Programming firmware to flash. */
-    BL_STATE_VALID                /**< Firmware successfully validated. */
+    BL_STATE_VALID,                /**< Firmware successfully validated. */
+    BL_STATE_WAIT_DEVICE_ID_CONFIRM,
+    BL_STATE_WAIT_DEVICE_ID_REQ,
 
 } BL_State_t;
 

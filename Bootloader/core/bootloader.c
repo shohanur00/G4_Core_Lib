@@ -373,7 +373,7 @@ static void Bootloader_ProcessPacket(
                     bl_context.state
                 );
 
-                bl_context.state = BL_STATE_CONNECTED;
+                bl_context.state = BL_STATE_WAIT_DEVICE_ID_REQ;
 
                 Bootloader_SendACK();
             }
@@ -396,7 +396,7 @@ static void Bootloader_ProcessPacket(
 
         case BL_CMD_DEVICE_ID_REQ:
         {
-            if (bl_context.state == BL_STATE_CONNECTED)
+            if (bl_context.state == BL_STATE_WAIT_DEVICE_ID_REQ)
             {
                 Bootloader_SendDeviceID();
 
@@ -405,23 +405,31 @@ static void Bootloader_ProcessPacket(
                     bl_context.state
                 );
 
-                bl_context.state =
-                    BL_STATE_WAIT_FW_LENGTH;
+                bl_context.state = BL_STATE_WAIT_DEVICE_ID_CONFIRM;
             }
             else
             {
-                Bootloader_SendNACK(
-                    BL_ERROR_STATE
-                );
-
-                bl_context.state =
-                    BL_STATE_WAIT_SYNC;
+                Bootloader_SendNACK(BL_ERROR_STATE);
             }
 
             break;
         }
 
+        case BL_CMD_DEVICE_ID_CONFIRM:
+        {
+            if (bl_context.state == BL_STATE_WAIT_DEVICE_ID_CONFIRM)
+            {
+                Bootloader_SendACK();
 
+                bl_context.state = BL_STATE_CONNECTED;
+            }
+            else
+            {
+                Bootloader_SendNACK(BL_ERROR_STATE);
+            }
+
+            break;
+        }  
         /* ----------------------------------------------------------
          * Firmware Size
          * ---------------------------------------------------------- */
@@ -434,7 +442,7 @@ static void Bootloader_ProcessPacket(
 
 
             if (bl_context.state !=
-                BL_STATE_WAIT_FW_LENGTH)
+                BL_STATE_CONNECTED)
             {
                 Bootloader_SendNACK(
                     BL_ERROR_STATE
@@ -804,6 +812,83 @@ static void Bootloader_ProcessPacket(
             * Firmware is now valid
             */
             bl_context.state = BL_STATE_VALID;
+
+            break;
+        }
+
+        /* ----------------------------------------------------------
+        * Erase Application Firmware
+        * ---------------------------------------------------------- */
+
+        case BL_CMD_ERASE_FIRMWARE:
+        {
+            /*
+            * Accept erase only after successful SYNC.
+            */
+            if (bl_context.state != BL_STATE_CONNECTED)
+            {
+                Bootloader_SendNACK(BL_ERROR_STATE);
+                break;
+            }
+
+            /*
+            * Invalidate old application metadata first.
+            *
+            * IMPORTANT:
+            * Replace this call with your project's actual metadata
+            * invalidation implementation. Do not erase an arbitrary
+            * metadata range unless its layout is confirmed.
+            */
+            if (!BL_Flash_Erase_MetaData(BL_METADATA_START_ADDRESS,BL_METADATA_SIZE))
+            {
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_FLASH_ERASE);
+                break;
+            }
+
+            
+            if(!BL_Flash_IsErased_MetaData(BL_METADATA_START_ADDRESS, BL_METADATA_SIZE)){
+                Bootloader_SendNACKAndCheckRetry(BL_ERROR_FLASH_ERASE);
+                break;
+            }
+
+            /*
+            * Erase only the application flash region.
+            * The configured region must exclude the bootloader
+            * and any separately reserved metadata pages.
+            */
+            if (!BL_Flash_Erase(
+                    BL_APP_START_ADDRESS,
+                    BL_APP_SIZE))
+            {
+                Bootloader_SendNACKAndCheckRetry(
+                    BL_ERROR_FLASH_ERASE
+                );
+                break;
+            }
+
+            /*
+            * Verify the application region is erased.
+            */
+            if (!BL_Flash_IsErased(
+                    BL_APP_START_ADDRESS,
+                    BL_APP_SIZE))
+            {
+                Bootloader_SendNACKAndCheckRetry(
+                    BL_ERROR_FLASH_ERASE
+                );
+                break;
+            }
+
+            /*
+            * Erase successful.
+            */
+            Bootloader_SendACK();
+
+            /*
+            * Return to connected state so the host can request
+            * device ID or start a new firmware update sequence.
+            */
+            bl_context.state = BL_STATE_CONNECTED;
 
             break;
         }
