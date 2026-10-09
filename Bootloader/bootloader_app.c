@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+#include "cdefs/cdefs.h"
 #include "stm32g431xx.h"
 
 #include "board.h"
@@ -190,13 +191,17 @@ void Bootloader_App_Loop(void)
                  * Remain in bootloader indefinitely.
                  */
                 Bootloader_GetBackTo_Idle();
+                // GPIO_Write(GPIO_LED, HIGH);
+                TimeCore_SetDurationForcefully(
+                    LED_timer,
+                    BL_LED_ERROR_BLINK_TIME
+                );
 
-                // TimeCore_SetDurationForcefully(
-                //     LED_timer,
-                //     BL_LED_ERROR_BLINK_TIME
-                // );
+                TimeCore_ResumeTimer(LED_timer);
+                TimeCore_ResetTimer(timeout);
+                TimeCore_StartTimer(timeout);
 
-                // state = LED_NOT_CONNECTED;
+                state = LED_NOT_CONNECTED;
             }
         }
     }
