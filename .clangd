@@ -1,2 +1,2 @@
 CompileFlags:
-  CompilationDatabase: build/Release-Bootloader
+  CompilationDatabase: build/Debug-Bootloader
